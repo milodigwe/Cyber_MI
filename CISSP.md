@@ -139,5 +139,37 @@ Annualized Rate of Occurance (ARO) is .5
 Annaulaized Loss Expectancy (ALE) is $1,3500,000 *.5 = $675,000
 
 # Risk Response and Treatment
+- Avoid Terminate : Avoiding the risk elimate the cause or terminate activity.
+- Transfer Risk : assign to another party insurrance. Transferred when likehood is low but the impact is high
+    - Cyber insurrance protection against cyber incident financial losses
+    - Business interruption insurance covers lost of income as well as cost of interruption for deined situations.
+
+- Mitigate Risk : Reduce the impact or likelihood by implementing control or process change.
+    - Control is a tactic that accomplishes reduces elimation of a vulnerability,likehood a threat would exploit a vulnerability
+    - Countermeasures ar controls implemented to address a specific threat.
+- Accept Risk : acknowledge and accept the level of risk and monitor it.
+    - Risk appetite: level of risk entity is willing to accpet in pursuit of its missions
+    - Risk tolerance : tactical and specific to the target being evaulated.
 
 
+* Risk exception - risk has been identified, but not feasible or practical to implement standard risk treatment or control measures.
+    - Exception handling process of approving an exception on either a temp or permanent basis.
+    - Risk exemption is a formal decision not to address a risk at all. Implemented when potentia
+    l impact of a risk is low and cost and effort required to mitigate the risk are disportionate to the potential impact
+
+# Risk Mitigation Controls 
+* - Controls strategies that mitigate risk by reducing or elimating vulnerabilities, threats, and impact
+    - Control objective is a statement of desired result or purpose to be achieved by implementing a control or set of controls.
+    - Defense-in-depth is a design and implementation of multiple overlapping layers of diverse control
+    - Controls should be verifiable (trustworhy)
+        - Functionality : Is what a control does
+        - Effectivenss : how well a control works
+        - Assurance : measure of confidence that intended security controls are effective in their application
+
+# Risk Monitoring, Reporting, and Maturity
+- Risk Register centrol repo for all risk-related doc, tracking, and accountability.
+
+- Key Risk Indicators are predictors (early warning signals) of unfavorable events that can adversely impact an org.
+- Lagging indicator derived from historical data.
+- Maturity evolution and improvement of processes, systems, and capabilitites within an org over time.
+    - Risk maturity model structued framework that helps org assess their curren risk managemnt capabilites
