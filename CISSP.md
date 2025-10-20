@@ -173,3 +173,63 @@ Annaulaized Loss Expectancy (ALE) is $1,3500,000 *.5 = $675,000
 - Lagging indicator derived from historical data.
 - Maturity evolution and improvement of processes, systems, and capabilitites within an org over time.
     - Risk maturity model structued framework that helps org assess their curren risk managemnt capabilites
+
+# Understand and Apply Threat Modeling Concepts and Methodologies
+* - Threat : category of objects processes or events that represent a potential danger to an asset
+* - Vulnerability : a weakness is a system, process, or person that can be exploited by a threat
+
+* - Exploit : when a threat actor successfully takes advantage of a vulnerability.
+
+* - Threat Actor (Agent): Adversary is an opponent, malicious intent
+* - Targeted Attack : threat actor chooses a  target for a specific objective
+* - Opportunistic Attack:  when a threat actor take s advantage of a vulnerable target not previously know to them.
+
+* - Attack vector : a potential pathway or scenario used by an adversary to access or penetrate the target system or environment
+    - Primary attack vectors include:
+        - Digital infrastructure
+        - People
+        - Code
+        - Physical infrastructure
+        - An attack surface is the sum of all attack vectors
+
+# Attack Vectors - Digital Infrastructure 
+ - Objective of a digital infra attack is dirsuption, manipulation, or compromise of IT or operational technology systems.
+- Amplification attack : attacker uses an amplication factor to multiply it power
+    - Ex. use bonets to launch DDos attacks or spam 
+- Reflection : attacker sends numberous requests to device with victim's ip. Conjucntion with amplification.
+
+- Domain Hijacking : unauthorized modfification of a domain name registration. Ex. DNS settings
+- URL Squatting : registrering or usng an internet domain name belonging to someone else
+- Type Squatting: taking advantange of common typos to create fradulent domains
+- OT : Operational Technology : Use of hardware and software systems to monitor and control physical processes in industrial settings
+
+# Attack Vectors - People
+- Social engineering action of exploiting human nature to gain acess minds, systems, data, or buildings
+    - Pretexts are fabricated scenarios (Stories) ued to conceal the true purpose of an activity.
+
+- Disinformation false or misleading information that is spread deliberately to deceive.
+    - Shallow Fake : alteration of media content using simple video editing software
+    - Deep Fake : use of machine learning and AI to manipulate or generate deceptive audo or video content.
+
+
+# Attack Vectors - Code
+* - 4 Common Code Attack Vectors : Injection, Cross-Site Scripting (XSS), Cross-Site Request Forgery (CSRF), Directory (Path) Traversal
+* - Injection attack tricks an application into including unintended commands in the data sent to an interpreter.
+* - Cross-Site Scripting (XSS) : A XSS attack is an injection of malicious code into a web application or back-end database that will execute scripts in a victim's browser
+* - Cross-Site Request Forgery (CSRF) : tricks a web browser into executing a malicious action on a trusted site.
+* - Directory Traversal : attack uses specially crafted input that includes sequences to traverse a directory and access files.
+
+
+# Threat Modeling and Intelligence 
+* - Threat Modeling a structured process by which potential threats, threat actors, and threat vectors can be identified, enumerated, and priortitized.
+    - Work factor is time, effort, and resources necessary for the attacker to successfully achieve their objective.
+
+* - Threat Modeling Approaches 
+    - Asset-centric (WHAT | WHY ) : Identifies valued assets
+    - Architecture-centric (HOW) : Identifies system design, component strength, and vulnerabilities
+    - Attacker-centric (WHO) : Identifies motivated adversaries
+
+* - Threat intelligence evidence-based knowledge about emerging threats that can be used to inform control decisions
+    - OSINT : Open Source Intelligence : Data collected from publicly available sources to be used in an intelligence context 
+
+    
