@@ -215,7 +215,9 @@ Annaulaized Loss Expectancy (ALE) is $1,3500,000 *.5 = $675,000
 # Attack Vectors - Code
 * - 4 Common Code Attack Vectors : Injection, Cross-Site Scripting (XSS), Cross-Site Request Forgery (CSRF), Directory (Path) Traversal
 * - Injection attack tricks an application into including unintended commands in the data sent to an interpreter.
-* - Cross-Site Scripting (XSS) : A XSS attack is an injection of malicious code into a web application or back-end database that will execute scripts in a victim's browser
+* - Cross-Site Scripting (XSS) : A XSS attack is an injection of malicious code into a web appdfx40w
+ 
+ tion or back-end database that will execute scripts in a victim's browser
 * - Cross-Site Request Forgery (CSRF) : tricks a web browser into executing a malicious action on a trusted site.
 * - Directory Traversal : attack uses specially crafted input that includes sequences to traverse a directory and access files.
 
@@ -230,6 +232,32 @@ Annaulaized Loss Expectancy (ALE) is $1,3500,000 *.5 = $675,000
     - Attacker-centric (WHO) : Identifies motivated adversaries
 
 * - Threat intelligence evidence-based knowledge about emerging threats that can be used to inform control decisions
-    - OSINT : Open Source Intelligence : Data collected from publicly available sources to be used in an intelligence context 
+    - OSINT : Open Source Intelligence : Data collected from publicly available sources to be used in an intelligence context
 
-    
+# Supploy Chain Risk Management and Mitigation
+* - A supply chain is an entire ecosystem of organization processes, people, and resources involved in providing a product or service.
+* - Supply Chain Risk Management (SCRM) : implementation of strategies to manage uncertainty, identify vulnerabilities, mitigate risks, and ensure continuity. Includes Contracts and Aggrements.
+
+Risk Mitigation Strategies 
+* - Sillicon Root of Trust (SRT) : a crypotgraphic hardware security module. Includes device integrity, secure boot.
+* - Physically Ynclonable Function (PUF) : unique and difficult to replicate hardware identifier.
+
+* - Sofware Bil of Materials (SBOM) : details list of components libaries, metadata, etc in dev of software app.
+
+* - Visability and Monitoring 
+
+
+# Establish and Maintain a Security Awareness, Education, and Training Program
+
+# SETA Principles and Practices 
+Education, Training, and Awareness 
+
+Executive Education (Briefing) : objective is insight and understanding for the long-term
+    Things to Do :
+    - Be specific to institutional goals include regulatory and requirements
+    - Business langugage
+    - Cover a limited number of topscs
+    - Provide a discussion framewaork and pre-reading material
+
+# Emerging SETA Trends, Techniques, and Topics
+
