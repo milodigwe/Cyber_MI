@@ -261,3 +261,40 @@ Executive Education (Briefing) : objective is insight and understanding for the 
 
 # Emerging SETA Trends, Techniques, and Topics
 
+## Moudle 2 Asset Security ##
+Ownwers are responsible for decisions related to classification and access control
+eDiscovery electronic data is sought , located, secured , and searched with
+the intent of using it as evidence in a civil or criminal legal case
+Disk Degaussing : elimates data on a drive by randomly changing the magnetic alignment
+
+The data controller determines the purposes for what personal data is processed and how.
+
+Criticality is based on the impact of unavalability.
+Handling standards inform custodians and users how to protect the information they use and systems they interact with. An acceptable use policy
+
+# Asset Classification
+* - An asset is any data, device, or the component of value to an org
+    - Classification the process of organizing assets by criticality and sensitvity.
+        - Sensitivity based on impact of exposure
+        - Criticality is baed on the impact of unavailabilty
+        - Asset classifications inform risk managment decisions, protection strategies, control decisions, audit scope, and regulatory compliance activities
+
+# Establish Information and Asset Handling Requirements
+* - Asset handling policies, and standards govern the proper managment, protection, and use of organizational third-part assets
+* - Handling Standars inform custodians and users how to protect the information they use and systems they interact with.
+
+# Provision Information and Assets Securely
+## Asset Management
+- Asset management is the systematic process of identifying classifying tracking and managing the various assests within an organization
+
+Iventory Tools 
+* - Mapping : Network Mapping tools are used to create physical and logical diagrams
+    - Popular tools : Solarwinds, Spiceworks, and Nmap.
+
+* - Emumeration : Network enumeration tools discover and document devices . Ex. DumpSec and Nessus
+
+* - Software Audit : designed to track licensed and unlicensee software Ex. Solarwinds, Zluri, and ManagaEngine 
+
+Service Provider Management  - is the oversight and coordination of relationships with external entitites that provide services or products to an organization
+
+# Data Management
