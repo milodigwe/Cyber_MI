@@ -298,3 +298,60 @@ Iventory Tools
 Service Provider Management  - is the oversight and coordination of relationships with external entitites that provide services or products to an organization
 
 # Data Management
+Data Management planning and execution of policies and practices that protect data confidentiality, integrity, and availability throughout its lifecycle
+ - Data States:
+    - Data at rest : data is stored or saved on a storage device. Not actively being processed.
+    - Data in transit: data being transferred or moved from location to another
+    - Data-in Use : data is actively being processed or accessed by a system, device or application. Data is actively being read, modified, manipulated
+
+
+Directors Executive Management - oversight responsible for actions of the organization
+
+Data Owners - responsible for decisions related to classification, access control, and protection.
+
+Data Custodians - responsible for data protection controls
+Data Users: treating data and interacting with information systems in accordance with organizational policy and handling standards.
+
+Data Controller -> Data Processor -> Data Protection Officer
+which/how           processes data      ensures org follows privacy regs
+personal
+data is proccessed
+
+
+GDPR Articale 39 Role : Data Protection Officer - DPO
+
+# Data Collection, Retention, and Archiving
+Legal Hold (Litigation Hold) : Legal Hold proces org is required to preserve and retain documents, data, or information that may be relevant to a legal case or investigation.
+
+# Data Storage Primer
+* - Cluster : Fixed length blocks of disk space. New file always starts at the beginning of a cluster.
+
+* - Slack space : Space between the end of a file and the end of cluster
+* - Unallocated (free) space : Clusters are not allocated to a file
+* - Index : Pointer to data location
+
+Data Deletion: The original file remains intact until the space is used , and the original file is overwritten. Potentially all or part of the 
+delete file entry can be recovered
+
+Data remanence : refers to the residual traces of data that remain on a storage medium even after attempts have been made to earase or delete the information.
+    - Securing Deletion Approaches
+        - Cleaning : removal of data, cannot be recoverd usng normal system functions
+        - Purging : removal of data cannot be reconstructed
+        - Destruction: physical act of destroying media cannot be reconstructed.
+        - Pulping : corrosive solutions to dissovle and destroy the media
+
+Degaussing is a permanet puring technique using electromagnetic fields.
+- Certificate of Destruction issued by commerical services upon destruction of media
+
+# Asset Retention and Retirement
+- End of Sale : no longer for sale
+- EOL (End-of-Life) : Obsolete the product or subscription is not sold, improved, or maintained.
+- EOS (End-of-Support) : After this date updates are no longer available
+
+# Venodr Lifecylce Policies
+- Vendor lifecylce policies establish clear and predictable guidelines for product support and ervicing timelines
+    - Fixed Lifecycle (Traditional) Products with defined lifecycel dates.
+    - Continouse Lifecycle (Modern): Products with continouse support and servicing
+        - Customers must take the latest update to remain supported.
+        
+# Determine Data Security Controls and Compliance Requirements 
