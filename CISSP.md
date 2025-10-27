@@ -353,5 +353,43 @@ Degaussing is a permanet puring technique using electromagnetic fields.
     - Fixed Lifecycle (Traditional) Products with defined lifecycel dates.
     - Continouse Lifecycle (Modern): Products with continouse support and servicing
         - Customers must take the latest update to remain supported.
-        
+
 # Determine Data Security Controls and Compliance Requirements 
+# Control Baselines
+* - Controls are proactive tactics, mechanisms, or strategies that proactively minimize risk 
+
+* - Control baslines serve as starting point and should be strategically aligned with the needs of the org.
+    - Security control baselines express minimum standards for a given environment
+
+Fine-tuning Controls 
+    - Scoping (eliminating unnecessary controls)
+    - Tailoring (customizing and fine-tuning)
+    - Compensating (substituting controls)
+    - Supplementing (adding controls as warranted)
+
+# Data Protection Methods
+* - Data protection is the planning and execution of policies and practices that protect and when possible, enchance the value of data throughout its lifecycle 
+    - Data Loss Prevention (DLP) - solutions are designed to detect data movement and to prevent data exfiltration (unathroized or accidental release or removal of data)
+* - Cloud Access Security Brokers (CASBs): are security policy points (software or appliance) placed between the cloud and enterprise users
+    -  CASB proxy traffic and use auto discovery to identify cloud applications. Ex. authentication, encryption, and DLP
+        - Provide control of shadow IT app. 
+            - Shadow IT the use of IT solutions that are managed outside of and without knowledge of the IT department.
+
+
+DRM : Digital Rights Management prevent unauthorized copying, distribution and use of digital content . Mitigation options below.
+Ex.  Watermarks (graphic file) - track usage when content is cp, manipulated or transformed into another format
+     Metadata - used to capture and monitor copyrights and licensing info to prevent unauthorized use
+    Embedded Code : control and how content is published
+    License Agreements : end-user licening aggrements can incorporate shaing,download, reuse, and manipulate restrictions 
+
+Data Obfuscation Tools 
+- Synethic data : Generation of artifical data with smilar statistical properties to the original data source 
+- Tokenization : Substituting sensitive data with a non-sensitive equivalent in prod env.
+- Pseudo-anonymization : method used to substitute identifiable data with a reversible, consistent value 
+- Anonymization : process in which individually identifiable data is altered in such a way that it no longer can be related back to a given individual
+
+
+# Domain 3 Security Architecture and Engineering
+## Research, Implement, and Manage Engineering Processes using Secure Design Principles
+
+# Secure Design Principles
