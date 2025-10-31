@@ -393,3 +393,53 @@ Data Obfuscation Tools
 ## Research, Implement, and Manage Engineering Processes using Secure Design Principles
 
 # Secure Design Principles
+Protection profiles define security requirements for specific types of products or systems 
+Salts are random values appended to the input to negate the value of rainbox tables 
+Cloud Multitenancy - In cloud services environments, each customer's data and services isolated from other customers activities. The underlying physical components are pooled and virtually allocated.
+
+# Secure Design Planning Principles 
+- Threat Modeling : Use threat modeling to anticipate threats. Focust on undersirable consquences.
+- Keep it Simple : Security mechanisms should be as simple as posible.
+- Default Deny : By Default access is denied.
+- Secure Defaults : Secure settings should be enabled by default
+- Fail-Secure : In event of failure, access is denied
+- Privacy by Design : Privacy is the default posture.
+
+# Secure Design Configuration Principles
+ - Defense-in-depth
+ - Least Functionality
+ - Appropriate Disclosure
+ - Open Design
+ - Zero Trust
+ - Trust but Verify
+ - Separation of Duties 
+ - Least Privilege
+ - Santize Data Sent to Other Systems 
+
+# Zero Trust and Secure Access Service Edge (SASE)
+- Zero trust (ZT) : security framework requiring all subjects, assests, and workflows to be authenticated validated keeping access to applications and data.
+
+Zero Trust Architecture (ZTA)
+Control Plane includes Policy Engine + Policy Admin (Policy Decision Point)
+Data Plane :  Policy Enforcement Point Unstrusted (Enterprise Resources )
+
+
+# Control and Data Planes 
+- In networking, a plane is an abstract concept of where certain processes take place. In a zero-trust environment, there is a separation of the control and data plane.
+    - Control Plane : The control plane is used by infrastructure components to maintain and configure assets, acess control, and communications secuirty.
+        - In a ZT environment, requewsts for access are made through the control plane.
+    - Data Plane : The data plane is used for communication (moving data) between software components.
+
+# Zerot Trust Logical Components
+- Policy Decision Point (PDP) : fucntions as a gatekeeper, to logical components Policy Engine and Policy Administrator
+- Policy Engine (PE): responsible for granting access to resources
+- Policy Administrator (PA) : generates sessions specific authentication token or creds used to access resources
+- Policy Enforcement Point (PEP): responsible for enabling monitoring and terminating connections betwwen subjects and enterprise resources.
+
+Secure Access Service Edge (SASE) network architecture framework that brings cloud native security technologies together with traditional WAN capabilities as a cloud service.
+
+# Information Security Models 
+- Focus on interactions and provide structure and rules to be followed to accomplish a specific objective
+
+Subjects are active entitites that cause information to flow among objects or changes the system state. (Label based of clearance)
+Objects are passive entities that contain or receive information or instructions (Label based on classification)
