@@ -443,3 +443,40 @@ Secure Access Service Edge (SASE) network architecture framework that brings clo
 
 Subjects are active entitites that cause information to flow among objects or changes the system state. (Label based of clearance)
 Objects are passive entities that contain or receive information or instructions (Label based on classification)
+
+Simple = Read
+Star[*] = Write 
+
+Bell-LaPadula : Objective is confidentiality
+    - Subjects cannot read data higher classification
+    - Star Rule: Subjects cannot write to an object at lower classification
+
+Biba : Objective is integrity
+    - Star Rule : Subject cannot write to an object at higher classification 
+    - Simple rule: Subjects cannot read data that has a lower classification
+
+Clark-Wilson : integrity - well-formed transactions ensure that a user cannot alert. Only in a specified way in order to rpeserve its consistency
+Sutherland: Objective is intergrity. Focus on preventing interference 
+Brewer and Nash - objective defend against conflicts of interest, can change dynamically depending upon a user's previous actions 
+
+# Select Controls Based Upon Systems Security Requirements
+# Security Evaluation Criteria 
+
+- Security evalution process is to assess product functionality and assurance in a consistent and repeatable manner.
+    - Functonality: verification that security control exists and that it works correctly at least once.
+    - Assurance : degree of concidence that the ststem will act in a correct and predicatable manner in every computing situtation (trustwothy computing)
+
+TCSEC : Trusted Computing System Evaluation Criteria : evaluate classify and select systems for the DOD based upon confidentiality requirements
+ITSEC : IT Security Evaluation Criteria used to evaluate functionality and assurance of computer system
+
+Protection Profiles (PPS) define sets of security requirements for specific types of products or systems.
+    - Vendors create Security Targets that describe the security features and functionalities of their specific products
+ 
+    - EALs - indicate the depth and rigor of the evaluation process
+        - Functionally tested 1 all the way to EAL7 Formally verified designed and tested.
+
+# Understand Security Capabilities of Information Systems
+
+# Trusted Computing Base
+
+

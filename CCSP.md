@@ -42,4 +42,14 @@ Zero Trust : trust but verify by granting no implicit trust
 
 
 # Cloud Security Hygiene
-- 
+- CIS Critical Security Controls - ranked set of countermeasures to counter most common cyber attacks against networks.
+
+
+Cloud Return-on-Investment (ROI): measurement that characterizes the impact that a cloud investment has on the enterprise.
+    - Cloud Data portability  to shift data or containers from one cloud service to another without neededing to re-enter the data or re-program
+    - Cloud application portability ability to migrate an app from one cloud service to another or between customers environment
+    - Cloud interoperabiity is the ability of a consumers system to interact with a cloud service by exaching data based upon an agreed practice to get anticipated results
+    - Vendor lock-in where consumer is unable to preserve, migrate, or transfter to another sevrice provider due to tech or non tech contstraints
+        - Ex. Common with Software service
+
+# Security Considerations for Cloud Service Types
