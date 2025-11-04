@@ -478,5 +478,14 @@ Protection Profiles (PPS) define sets of security requirements for specific type
 # Understand Security Capabilities of Information Systems
 
 # Trusted Computing Base
+- Trusted Computing Base (TCB): are the components of a computer system that must be truated to enforce the security policy
 
+Basic Input Output System: initializes hardware before booting an operating system and manages data flow between the computers operating system (OS) and attached devices
 
+- UEFI : replacement for PC BIOS
+    - more advanced and versatile interface between OS and system firmware
+    - supports secure boot
+    - Secure Boot is a UEFI feature that ensures only digitally signed and authenticated bootloaders and operating system kernels are allowed to run during the system startup.
+    Only allows digitally signed and authoerized code to execute
+
+- Trusted Platform Module (TPM)
