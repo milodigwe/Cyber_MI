@@ -19,5 +19,22 @@ Governance Risk and Compliance Tools : help orgs manage their goverance, risk ma
 # Risk Management Activites 
 # Impact Analysis
 
-Third-party Risk Management
+Industry Standards
+- PCI Data Standard (PCI DSS): deals with credit card and payments
+- ISO/IEC 2700 family : information security management for INFOSEC
+- DMA : UE law for digial platforms.
 
+Security and Reporting Frameworks
+- SOC 2 - assurance of security controls
+- NIST - cybersecurity Framework
+
+# Threat Actor Characteristics
+Attack patterns techniques that describe how adversaaries exploit systems or software vulnerabilities
+
+mitre
+cape.mitre
+Cyber Key Chain - Lockheed martin 
+OWASP Top Ten
+
+
+# Attack Surface Determination
