@@ -121,7 +121,47 @@ Insecure Output handing is a weakness in how an AI model predictions or outputs 
                Sensitive Information in Output
                Improper Integration with External Systems 
 
-# Training Data Poisioning
+Training Data Poisioning - where adversaries intentionally introduce malicious or altered data into the trainning set
+    - Can lead to inaccurate predictions or enabling specific backdoor behaviors.
 
+Model theft is where attackers attempt to copy or recreate proprietary models 
+    - Such Attacks include : 
+        - Repeated Querying for Model Behavior Replication
+        - Creating a Surrogate Model
+        - Reverse Engineering via Model Extraction
+
+Model inversion attacks allow adversaries to extract sensitive information froma  model's predictions
+    - By analyzing output patterns or propbility distributions, attackers can reverse-engineer sensitive info that the model has learned
+    - Such Attacks Inlcude :
+        - Querying the Model with Targeted Inputs
+        - Analyzing Probability Distributions
+        - Reconstructing Sensitive Information
+
+Insecure plug-in design is a significatn concern in AI-enabled attacks
+    - Plugins are modular components that extend the functionality of software applications.
+
+Deepfakes are a form of digital media manipulation that leverages machine learning to create highly realistic images, vidoes, and audio that mimic real individusls
+
+AI pipeline injections cyberattack that target the various stages of an AI pipeline, which includes data ingestion, model training, and deployment.
+    - Ingest malicious code
+
+Data poisoning is done by introducing manipulated or malicious data during the data ingestion or preprocessing stages
+
+AI systems operate based on pre-trained models and predefined rules
+
+Implementing guardrails for ai-enabled assistants and digital workers
+    - Guardrails are policies, guidelines, and technical controls designed to manage AI behaviros, data handing, and user interactions with predefined boundaries.
+
+Key Points for Guardrails
+1. Ensuring Ethnical and Compliant AI Behavior
+2. Mitigating Security Risk and Protecting Data Intergrity
+3. Access Control for Sensitive Data
+4. Preventing Unauthorized Actions 
+
+
+# Module 2 : Security Architecture
+# Next-generation Firewall
+
+Ciso Secure Firewall ASA security device protects corporoate networks and data centers of all sizes.
 
 
