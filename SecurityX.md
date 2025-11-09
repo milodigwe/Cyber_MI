@@ -164,4 +164,18 @@ Key Points for Guardrails
 
 Ciso Secure Firewall ASA security device protects corporoate networks and data centers of all sizes.
 
+# Network Access Control (NAC)
+- Network Access (Admission) Control (NAC) is a security initiative that verifies and grants access to devices trying to connect to a network.
+    - enforces polices ased on criteria such as device type, user identity and security rules.
+
+Web Application Firewall (WAF) goes on top the load balancer.
+
+CDN: system of geographically distributed servers that stored cached copies of dyanmic content.
+
+Typical AWS environment
+
+Web Request -> Route 53 or Global Accelerator -> AWS WAF -> CloudFront -> Load Balancers -> AZ1 / AZ2 including EC2 instances in eahc AZ with different subnets.
+
+
+Scanner, Proxies, Taps, and Collectors
 
