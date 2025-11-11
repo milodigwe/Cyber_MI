@@ -178,4 +178,28 @@ Web Request -> Route 53 or Global Accelerator -> AWS WAF -> CloudFront -> Load B
 
 
 Scanner, Proxies, Taps, and Collectors
+- Proxy : A system or a process that ensures only authorized users can access specific resources.
+- Tap : hardware device used to create a copy of network traffic for monitoring and analysis without interrupting the main data flow.
+- Collectors : Tools or systems designed to aggregate data from multiple sources, such as logs, network packets, and system events.
 
+
+# Securing the Devops Lifecycle
+# Security Requirements Definition
+
+Static Application Security Test (SAST) - is a method of security testing that analyzes source code, bytecode, or binary code to identify vulnerabilities in software applications
+    - SAST is performed early in software development lifecycle
+        - Allows developers to detect and fix security issues before the application is deployed.
+
+
+Dynamic Application Security Testing (DAST) - is a method of security testing that evaluates applications during runtime.
+    - DAST interacts eith application in its operational environment to identify vulnerabilities that could be exploited by attackers.
+
+Interactive Application Security Testing (IAST)- method of security testing that combines elements of both SAST and DAST
+    - anaylze applications in real-time by monitoring applications behavior and interactions while its running.
+
+Runtime Application Self-Protection (RASP) - realtime protection against attacks
+    - Proactive approach helps to neutralize vulnerabilites and prevent exploitation by attackers.
+
+Vulnerability Analysis LifeCycle : Discovery, Analysis, Prioritization, Remediation, Verification
+
+# Continuous Integration/ Continuous Deployment CI/CD
