@@ -203,3 +203,83 @@ Runtime Application Self-Protection (RASP) - realtime protection against attacks
 Vulnerability Analysis LifeCycle : Discovery, Analysis, Prioritization, Remediation, Verification
 
 # Continuous Integration/ Continuous Deployment CI/CD
+Linting - the process of using tools (linters) to analyze code for potential errors, style issues, and adherence to coding standards
+
+Branch Protection - ensure the integrity of the branch
+    - Restricting Direct Pushes : Preventing direct pushes to critical branches main and master. Ensures that all changes go through a review process.
+    - Pull/Merge Request Workflow
+    - Automated Testing and Re-testing - Integrating automated tests into the CI/CD pipeline ensures that code changes are tested for functionality.
+    - Code Quality Checks - Enforcing code quality checks, sucha as liniting and static analysis helps ensure that the code adheres to coding standards and best practices.
+
+Canary Testing
+    - Planning the Canary Release : Before deploying the new code, determine the criteria for slecting the initial group of users (the canary group)
+
+    -Deploying the Canary Group: Release the new version of the software to the canary group
+            - This can be done using feature flags, load balancers
+
+CI/CD Unit Testing 
+- Purpose 
+- Automation
+- Isolation
+- Test Coverage 
+- Tools
+
+Hardware Assurance : process to ensure that hardware components are free from know vulneeerabilities throughtout their lifecycle
+
+# Secure Architecture and Control Design
+Hardening
+Defense in Depth
+
+Managing Legacy Components
+    - Isolation
+    - Access Control
+
+Hybrid Infrastructure Security Solutions
+1. Identify and Access Management
+2. Data Encryption
+3. Network Security
+4. Endpoint Security
+5. SIEM Systems
+6. Cloud Access Security Brokers
+7. Zero Trust Architecture
+
+# Designing Access, Authentication, and Authorization
+
+# Access Control Systems 
+Acess Control is control by using STIGS.
+
+# Federation and SSO
+Federated access refers to a framework that allows organizations to establish trust relationships with external parties
+    - Enables users from one domian to access resources in another domain wihout needing spearate credentials for each service or domain. Works together with SSO
+        - Utilizes trusted identity provider that authenticste users allowing them access to resources.
+
+    Trusted Identity Providers (IdPs)in a Single Sign-ON (SSO) are systems that authenticate users and issue security tokens confirming their identity.
+        - These tokens are then used by Service Providers (SPs) to grant acces to various applications and services without requireing users to re-enter their credentials.
+    Trusted Service Providers (Sps) in single Sign-On are the applications or services that users want to access
+        - These SPs rely on Trusted Identity Providers (IdPS) to authenticate users and provide the necessary security tokens
+
+Conditional Access is a security strategy that uses context-based policies to manage access to systems and data
+    - Evaluates additional conditions such as the user's device,location, time of access, and device configuration to make more informed access control decisions.
+    - Conditional Access Techniques:
+        User-to Device Binding
+        Geographic Location
+        Time-based Access
+        Configuration Settings
+
+Attestations refers to the process of verifying and validating the integrity and security posture of device or systme before granting access.
+
+Access Control Models
+- Role-Based Access Control assign permissions to roles instead of users.
+Rule-Based Access Control : security model where access permissions are determined by predefined rules
+    Based on Criteria of Time-Based, Location, Event-Drive, Temporary Access.
+
+Attribute-Based Acces Control (ABAC): complex rule sets sets.
+    - Use Case: Enterprise Env's , Healthcare, Educational Institutions, Governemnt Agencies, and Financial Services.
+
+
+
+    
+
+
+
+
