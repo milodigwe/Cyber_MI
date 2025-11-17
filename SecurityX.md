@@ -276,10 +276,25 @@ Rule-Based Access Control : security model where access permissions are determin
 Attribute-Based Acces Control (ABAC): complex rule sets sets.
     - Use Case: Enterprise Env's , Healthcare, Educational Institutions, Governemnt Agencies, and Financial Services.
 
+# Cloud Control Strategies
+-Taking Proactive Controls such as : Automation, Monitoring and Detection, and Incident Response
+
+- Detective Cloud control stategy focuses on identifying and responding to security incidents and potential threats within a cloud environment
 
 
-    
+# Severless Cloud Solutions
+Container Security
+- Ensures the container images are secure is vital
+- Includes trusted sources for images, regulary scanning images for vulnerabilities, and maintaining an updated image registry.
+- Runtime Security: detect and respond to anomalies, ensuring that containers run with least prvi and implementing security policies that control behavior
 
 
+# Cloud Access Security Brokers (CASB)
+- A cloud access security broker is a security policy enforcement point positioned between enterprise users and cloud service providers.
+    - API-based Cloud Access Security Broker integrates directly with cloud service providers using their APIs to provide security and visibility into cloud applications
 
+- Proxy-based Cloud Access Security Broker sits between the user and the cloud application acting as a gateway
+
+# Cloud Connectivity, Integration, and Adoption
+* A cloud-based managed Site-to-Site VPN is a fully managed service that creates a secure connection betwewn your data center or branch office and your resources using IP security (IPSec tunnels)
 
