@@ -298,3 +298,26 @@ Container Security
 # Cloud Connectivity, Integration, and Adoption
 * A cloud-based managed Site-to-Site VPN is a fully managed service that creates a secure connection betwewn your data center or branch office and your resources using IP security (IPSec tunnels)
 
+Cloud VPN Gateway services simplify the process of setting up and managing VPN connections
+
+SD-WAN (Software-Defined Wide Area Network) - solutions can be used to securely connect multiple branch offices to cloud providers
+    Cloud Peering : peering services that enable direct network connections between your network and the cloud provider's network.
+
+
+# Zero Trust Concepts
+- Zero trust Move defenses from static, network-based perimeters to focus on users, assets, and resources.
+Three core principles :
+* Verify Explicitly  : Always authenticate and authorize based on all available data points, including user identity, location device health, service or workload, data classification and anomalies
+
+* Use Least Privledge
+
+* Assume Breach : Minimize blast radius for breaches and prevent lateral movement by segmenting access by network, user, devices, and application awareness.
+
+Data perimeters are boundaries around sensitive data to ensure it is only accessible to authorized users and systems.
+
+Security Boundaries
+- Segmenting the network into secure zones will limit the movement of potential threats and reduce the attack surface
+    - This involves using technologies like firewalls, instrusion detection and prevention systems (IDS/IPS) and network segmentation
+
+# Continuous Authorization and Context-based Reauthentication
+
