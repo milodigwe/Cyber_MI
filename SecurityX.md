@@ -320,4 +320,22 @@ Security Boundaries
     - This involves using technologies like firewalls, instrusion detection and prevention systems (IDS/IPS) and network segmentation
 
 # Continuous Authorization and Context-based Reauthentication
+- Dynamic context valuation involes continuously assesing the context 
+in which access requests are made
 
+# API Ingdbfzgion and Validation
+- Includes:
+    - Authentication
+    - Authorization
+    - Input Validation
+    - Rate Limiting : to control the number of API requests made within a specific time frame. Helps prevent abuse and mitigating the risk of DoS attacks
+    - Logging and Monitoring
+
+* Zero Trust Asset Attestation
+- Asset Attestation involves key practices to ensure that all assets, including devices, applications and data are verified and trusted before they are granted accesss to the network.
+    - Verify integrity and secure posture before they are allowed to interact with the network.
+
+# Lesson 12: Engineering and Troubleshooting IAM
+- Service Access Control - ensuring that servies interacting with other services or users have the appropriate access rights
+
+# Authentication or Authorization
