@@ -338,4 +338,62 @@ in which access requests are made
 # Lesson 12: Engineering and Troubleshooting IAM
 - Service Access Control - ensuring that servies interacting with other services or users have the appropriate access rights
 
-# Authentication or Authorization
+# DNS Security
+Unauthorized Access : 
+- A DNS zone transfer is a bulk transfer of DNS zone data from one DNS server to another, used to keep multiple authoritative servers synchronized
+
+- DNS Sinkholing is a technique used to redirect malicious traffic to a controlled IP address, preventing users from accessing harmful domains
+    - Often in a honeypot or honeynet
+    - Prevents malware from communicating with command-and-control servers
+    -  Collects data on malicious traffic and compromised devices
+    - Protects the network by preventing users from accessing harmful websites.
+
+- DNSSEC adds security by enabling DNS responses to be validated as genuine.
+    * DNSSEC Records
+        - RRSIG (Resource Record Signature) 
+            - Description : Contains a cryptographic signature
+            - Purpose : Verifies the authenticiity of DNS data
+        - DNSKEY:
+            - Description: Contains a public signing key
+            - Purpose: Used to verify RRSIG records
+        - DS (Delegation Signer):
+            - Description: Contains the has of a DNSKEY record
+            - Purpose: Establishes a chain of trust between parent and child zones
+
+NSEC : Next Secure Record : points to the nexr record in the zone
+CDNSKEY and CDS :Used for child zones to request updates to DS records in the parent zone.
+
+New solution is OpenDNS
+
+# Email Security
+* S/MIME standard for public-key encryption and signing of MIME data
+    - provides cryptopgrahic security services for electronic messaging applicaitons.
+* Troubelshooting S/MIME :
+    - Certificate Issues:
+        - Invalid or expired certs, result users may be unable to encrypt or decrypt emails, leading to communication disruptions
+    - Compatibility Problems : email client may have different levels of s/mime.
+
+    - DKIM responsible for transmitting a message by signing it with a cryptographic signature 
+
+    - DMARC email protocol that helps protect email domains from unauthorized use, such as phishing and email spoofing
+
+# TLS and PKI
+## Main TLS Configuration Errors
+- Incorrect Certificate Configuration
+- Cipher Suite Mismatch
+- TLS Version Mismatch
+- Misconfigurred Intermediate Certificates
+
+HSM : physical computing device that safeguards and manages digital key for strong authentication and cryptographic procesing
+
+Secure Enclaves : hardware secure enclave is a dedicated area within a processor that provides a secure environment for executing sensitive code and storing sensitive data
+    - enclave is isolated from the rest of the system.
+
+# Host-based Encryption and Self-encrypting Drive
+- Host-based Encryption
+    - Type of encryption ensures that data is protected at rest meaning it is encrypted when stored on the device's hard drive or other stored media. Uses software-based encryption
+
+    Example is BitLocker and FileValut
+* Self-encrypting Drivers (SED) - storage devices that automatically encrypt data s it is written to the drive and decrypt it when it is read
+    - Uses hardware-based encryption
+
