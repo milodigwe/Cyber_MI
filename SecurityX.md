@@ -397,3 +397,31 @@ Secure Enclaves : hardware secure enclave is a dedicated area within a processor
 * Self-encrypting Drivers (SED) - storage devices that automatically encrypt data s it is written to the drive and decrypt it when it is read
     - Uses hardware-based encryption
 
+#  Advanced Cryptographic Concepts
+# Post-quantum Cryptography
+    - PQC : secure against attacks by quantum computers
+    - Key stretching is a cryptographic technique that makes a weak key, like a password, stronger by applying an algorithm multiple times
+    - Key splitting is the process of dividing a cryptographic key into multiple parts, called "shares," which are then stored or distributed separately
+# Homomorphic and Envelope Encryption
+- Homorphic encryption technique that allows computations to be performed on encrypted data without needing to decrpt it first.
+
+- Envelope encryption combining both symmetric and asymmetric encvryption techniques
+
+* Forward secrecy means that even if an attacker gains access to proivate key, they cannot decrypt past session keys and past communications.
+    - Example of the apps that use it , Whatsapp, Signal.
+
+AEAD (Authenticated Encryption with Associated Data)
+    - technique that ensures both the confidentiality and intergrity of data
+
+Secure Multipary Computation (SMC) - goal to enable multiple parties to jointly compute a function over their inputs while keeping those inputs private.
+    - Used in Auctions, Voiting
+
+# Appropriate Cryptographic Use Cases and Techniques
+Data Masking : Replacing sensitive data with fictious but realistic data
+Pseufonymization : Replacing private identiffiers with fake identifiers 
+
+Software provenance refers to the veriable information regardinng the origin and history of software component
+
+# Module 4: Security Operations
+
+
