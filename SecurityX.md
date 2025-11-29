@@ -423,5 +423,60 @@ Pseufonymization : Replacing private identiffiers with fake identifiers
 Software provenance refers to the veriable information regardinng the origin and history of software component
 
 # Module 4: Security Operations
+Aggregate data analysis involes combining and analyzing data from multiple sources to identify patterns, trendss, and correlations
+ 
+Process of Incorporating Third-part Reports and Logs
+- Data Collection
+- Integration
+- Normalization
+- Correlation
+- Analysis
+- Alerting
+- Reporting
 
+Threat intelligence feeds are continous streams of data that provide real-time information about potentional cyber threats
+    - Including Indicator of Compromise (IoCS), tactis, techniques, and procedures (TTPS) used by threat actors
 
+IoCS - pieces of digital forensics that suggest a system or network might have been breached
+    Ex. malicious IP, domains, URLS and file hashes
+
+TTPS - describe bahviour and methods used by threat actors to carry out attacks
+    - TTPS help or anticipate and defend against potential threats
+
+Contextual Information : Provides data Context.
+    Common Threat Intelligence Feeds
+        - AlienVault Open Threat Exchange
+        - Spamhasus
+        - URLhasus
+        - SANS Internet Storem Center
+
+Vulnerability Alerting Activities
+- Scanning 
+- Detection
+- Alert Generation
+- Prioritization
+- Notification
+- Reporting
+- Remediation Guidance
+- Continous Monitoring
+
+# Lession 21: Analyzing Vulnerabilities and Attacks
+
+## Injection Attacks
+Attacker will use a tool like Burp Suite to Discover the vulnerability.
+
+# Request Forgery
+Cross-Site Request Forgery (CSRF) : cyberattack where an attacker tricks a user's browser into making an unwanted action on a website where the user is currently authenticated
+
+# Unsafe Memory Utilization
+- Use Safe Memory Functions
+- Input Validation : Validate all input data to ensure it meets expected formats and sizes
+    - Helps prevent buffer overflows and other memory-related vulnerabilities
+
+# Race Conditions
+- Type of vulnerability that occurs when multiple threads or processes access shared resources concurrently, and the sequence or timing of their execution leads to unexpected or incorrect behavior
+    ## Key Characterstics of Race Conditions
+    - Concurrent Access : Multiple threads or processes simulataneously access shared resources such as varaibles, files, or memory.
+    - Timing Dependence: The order and timing of operation affect the behavior and outcome of the program
+    - Non-Deterministic Behavior : The program's behavior varies depending on the timing and sequence of events, making it unpredictable and potentially exploitable
+    - TOCTOU (Time-of-Check to Time-of-Use )
