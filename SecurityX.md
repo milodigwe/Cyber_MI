@@ -480,3 +480,40 @@ Cross-Site Request Forgery (CSRF) : cyberattack where an attacker tricks a user'
     - Timing Dependence: The order and timing of operation affect the behavior and outcome of the program
     - Non-Deterministic Behavior : The program's behavior varies depending on the timing and sequence of events, making it unpredictable and potentially exploitable
     - TOCTOU (Time-of-Check to Time-of-Use )
+
+* Deserialization the process of converting data that has been serialized (converted into a specific format for storage or transmission) back into its original form
+
+Output endcoding the process of transforming user-generated or untrusted data before displaying it in a an application
+
+Fail Secure a security principle that ensures a system defaults to a secure state in the event of a failure
+    - When system encounters an error or malfunction it locks down or denies access to protect sensitie data
+
+Fail Safe a security principle that ensures a system defaults to a safe state in the event of a failutre
+    - When system encounters an error or malfunction it prioritizes safety adn continutity of operations.
+    Ex. Elevators, when an elevator cable snaps, special brakes are automatically applied to prevent the elevator from falling
+
+Code Signing a security measure that involves digitally signing software code to verify its authenticity and integrity.
+    Ex. Google Andrioid requires all application distributed through play store to be signed. Ensures only trusted and verified apps.
+
+# Threat Hunting and Threat Intelligence
+
+Adversary Emulation Engagements
+* Realistic Simulation: Adversary emulation involves replicating the entire lifecyle of an attack, from initital reconnaissance to exploitation and post-exploitation activities
+    - Shows how well an org defesne can detect, respond to, and mitigate actual attack scenarios
+
+* Threat Modeling : involves identifying, assessing, and prioritizing potential threats that could impact the org
+
+* Use Frameworks: Use frameworks like MITRE which provide a playbook of real-world cyber attack tactics
+
+* Information Gathering, Enumeration the process of listing all relevant information about the network
+    - Helps attacks or anaylsts understnad the network structure and identify potential vulnerabilities
+
+Privledge Escalation -> Lateral Movement
+
+## Hypothesis-based Searches
+    - Hypothesis-based searches are proactive threat-hunting methodology where security analysts develop hypotheses about potential threats and then search for evidence to confirm or refute these hypotheses.
+
+* Hypothesis Development - Analysts create hypotheses based on observations, threat intelligence, and past experiences
+    - Hypotheses are educated guesses about potential threats or malicious activities within the network
+
+* Data Collection : Analysts gaher relevant data from various sources , uch as logs, network traffic, and endpoint data to test their hypotheses
