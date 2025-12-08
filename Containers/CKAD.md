@@ -42,4 +42,19 @@ docker kill is used to kill an unresponsive container
 
 docker logs <container_name>
 
-.
+# Managing Container Images 
+
+- Container Images Architectures
+    - Inside the Dockerfile, where the FROM statement is used to refer to the system image that is used
+    - Container images are layerd on top of each other.
+
+* Before starting a container, required images are pulled and stored
+    - Images can be pre-fetched using docker pull command
+    - docker images for a list of currently stored images
+* By default image policy may automatically pulled if available.
+    - The default image pull policy in Docker is always
+    - In Kubernetes, it can be set to newer.
+    - To remove unused images, use docker image prune.
+
+## Image Creation Options
+
