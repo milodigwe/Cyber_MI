@@ -58,3 +58,41 @@ docker logs <container_name>
 
 ## Image Creation Options
 
+docker commit allows you to create a customer image by saving changes made to a running container
+    - Dockerfile AKA Containerfile (Redhat) builds a customer image based on components defineed in the file.
+    - buildah build custom images in a scripted way
+
+Common Base images are:
+    - Busybox
+    - Alpine
+    - Red Hat UBI (Universal Base Image)
+
+# Using Dockerfile to Build Custom Image
+
+* To build an image from a Dockerfile, use docker build -t imageine .
+    - . refers to the directory where your "Dockerfile" is located. Alternatively you can specify the directory location
+    - -t (tag) specifies the name of the image you want to create
+
+When creating a script in dockerfile use #!/bin/sh
+
+To build an Dockerfile
+
+cd ckad/dockerfile
+cat Dockerfile
+docker build -t myapp .
+docker images
+docker image inspect myapp
+docker run my app
+docker run my app 3
+
+# Creating Image From a Running Container
+Steps to Create Image with docker commit
+- docker run --name customweb -it nginx sh : logs you in the shell of the container
+    - touch /tmp/testfile
+    - exit
+
+- docker commit customweb nginx:custome
+- docker images
+- docker run -it nginx:custom ls -l /tmp/testfile
+
+
