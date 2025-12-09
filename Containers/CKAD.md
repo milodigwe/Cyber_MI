@@ -96,3 +96,51 @@ Steps to Create Image with docker commit
 - docker run -it nginx:custom ls -l /tmp/testfile
 
 
+* Creating Custom Image
+
+linux@server1:~/ckad$ docker images 
+                                                            i Info →   U  In Use
+IMAGE          ID             DISK USAGE   CONTENT SIZE   EXTRA
+myapp:latest   bc73ef3f5fb7       12.6MB         3.86MB    U   
+nginx:latest   553f64aecdc3        225MB         62.6MB    U   
+linux@server1:~/ckad$ docker run --name customweb -it nginx sh
+# echo "welcome" >> /tmp/testfile
+# exit
+linux@server1:~/ckad$ docker commit customweb nginx:custom
+sha256:4a0653f8b94f54a0debf4923b569ff3750c2a1300d8965ec92d6ad2f7b8d59d7
+linux@server1:~/ckad$ docker images
+                                                            i Info →   U  In Use
+IMAGE          ID             DISK USAGE   CONTENT SIZE   EXTRA
+myapp:latest   bc73ef3f5fb7       12.6MB         3.86MB    U   
+nginx:custom   4a0653f8b94f        222MB         59.8MB        
+nginx:latest   553f64aecdc3        225MB         62.6MB    U   
+linux@server1:~/ckad$ docker run -it nginx:custom ls -l /tmp/testfile
+-rw-r--r--. 1 root root 8 Dec  9 20:55 /tmp/testfile
+linux@server1:~/ckad$ docker run -it nginx:custom cat /tmp/testfile
+welcome
+linux@server1:~/ckad$ 
+
+# Understanding Kubernetes
+
+What is Cloud Native 
+- To provide access to applications on the Internet, the applications should be 
+hosted in cloud
+
+Kubernetes open source platform that allows containers to be used in
+in a cloud native environment
+    - Kubernetes API defines a set of resources types such as Pods,
+    Deployment, and ConfigMap that allows for storing information in the cloud
+    native environment where no relation to specific servers exists.
+
+## Kubernetes Architecture
+
+* The control plane consists of one or more nodes where Kubernetes
+core services are running
+    - Kube-apiserver: provides access to the API
+    - etcd: the Kubernetes database
+    - kube-scheduler : responsible for scheduling Pods at specific location
+    - kube-controller-manager: manages core Kubernetes process
+* The worker nodes run the containerized applications by using two core services
+    - container runtime: the part that actually runs the container
+    - kubelete: the part that is contacted by kube-scheduler to run the actual containers in Pods
+
