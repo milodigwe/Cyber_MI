@@ -3,6 +3,13 @@
 https://github.com/sandervanvugt/ckad 
 Github repo
 
+Kubernetes resources
+https://devopscube.com/kubernetes-tutorials-beginners/
+
+Kubernetes Offical Documentation 
+https://kubernetes.io/docs/concepts/workloads/pods/
+
+
 ## What is a Container
 * Containers provide a method to run application in full isolation . Such as linux systemd process
     - To provide this isolation, Linux kernel namespaces are used.
