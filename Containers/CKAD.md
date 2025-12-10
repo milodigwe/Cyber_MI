@@ -219,7 +219,7 @@ kubernetes   Ready    control-plane   12m   v1.34.3
 linux2@kubernetes:~/ckad$ 
 
 kubectl edit node <hostname_of_system>
-Inside the file you will see something like this :
+Inside the file you will see something like this : line #26
 
 spec:
   taints:
@@ -237,4 +237,37 @@ After removing file your container will run.
 ## Run First Application
 Command to run first application :
     kubectl create deploy firstapp --image=nginx
+Use source <kubectl completion bash> to enable tab-based command-line completion for the Linux Bash shell.
+    kubectl only has a man page.
+Shows the man page for kubectl for bash completion
 
+kubectl completion -h | less
+
+To enable bash completion for current shell
+
+kad$ env | grep $SHELL
+SHELL=/bin/bash
+linux2@kubernetes:~/ckad$ kubectl completion -h | less
+linux2@kubernetes:~/ckad$ source <(kubectl completion bash)
+
+kubectl create deployment --image nginx firstapp
+deployment.apps/firstapp created
+
+kubectl get all
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/firstapp-847875d585-p9ql5   0/1     Pending   0          31s
+pod/testpod                     1/1     Running   0          24m
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   34m
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/firstapp   0/1     1            0           31s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/firstapp-847875d585   1         1         0       31s
+
+
+Minikube is a tool that lets you run a single-node Kubernetes cluster locally on your computer. It’s primarily used for development, testing, and learning Kubernetes without needing a full multi-node cluster.
+
+# Pod Basic Features 
