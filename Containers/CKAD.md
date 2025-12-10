@@ -1,5 +1,8 @@
 # Understanding and Using Containers
 
+https://github.com/sandervanvugt/ckad 
+Github repo
+
 ## What is a Container
 * Containers provide a method to run application in full isolation . Such as linux systemd process
     - To provide this isolation, Linux kernel namespaces are used.
@@ -143,4 +146,95 @@ core services are running
 * The worker nodes run the containerized applications by using two core services
     - container runtime: the part that actually runs the container
     - kubelete: the part that is contacted by kube-scheduler to run the actual containers in Pods
+
+* API Resources
+    - Resources allow for storing and running applications in a Kubernetes environment
+    - Essential resource includes  :
+        - Pod : the minimal entity managed by Kubernetes. Runs containers
+        - Deployment:  adds replication and zero-downtime updates to the Pods
+        - ConfigMap : used to store config files and startup parameters
+        - Services : load balances incoming traffic to application instances
+        - Ingress/Gateway API : provides a reversed proxy for application access
+        - Persistent Volumes: represent persistent non-epthemeral storage
+
+
+kubectl api-resources : display reources.
+kubectl explain <resource> : This will explain whats going on in a resource
+
+*** Kubernetes Doc Page ***
+https://kubernetes.io/docs/home/
+
+
+# Creating Your environment
+Recommended to download ubuntu server and run minikube start , To configure environement.
+
+Steps to Install AiO Kubernetes
+* From git repo ./setup-container.sh
+* From git repo sudo ./setup-kubetools.sh
+* sudo kubeadm init
+* Set up client as instructed
+   mkdir -p $HOME/.kube 
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+* set up network plugin: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+* Verify the available namespaces:
+    linux2@kubernetes:~/ckad$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   6m16s
+kube-node-lease   Active   6m15s
+kube-public       Active   6m16s
+kube-system       Active   6m16s
+linux2@kubernetes:~/ckad$ kubectl get ns ; kubectl get namespaces
+
+Available pods in namespace :
+---
+kubectl get pods -n kube-system
+NAME                                      READY   STATUS    RESTARTS   AGE
+calico-kube-controllers-b45f49df6-kxmpg   1/1     Running   0          2m3s
+calico-node-xn2wm                         1/1     Running   0          2m3s
+coredns-66bc5c9577-pc866                  1/1     Running   0          7m12s
+coredns-66bc5c9577-sgznz                  1/1     Running   0          7m12s
+etcd-kubernetes                           1/1     Running   0          7m20s
+kube-apiserver-kubernetes                 1/1     Running   0          7m18s
+kube-controller-manager-kubernetes        1/1     Running   0          7m18s
+kube-proxy-82rd7                          1/1     Running   0          7m12s
+kube-scheduler-kubernetes                 1/1     Running   0          7m19s
+
+--
+
+To run a user pod on the control node you have to edit the control file:
+
+linux2@kubernetes:~/ckad$ kubectl run testpod --image=nginx
+pod/testpod created
+linux2@kubernetes:~/ckad$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+testpod   0/1     Pending   0          30s
+linux2@kubernetes:~/ckad$ 
+
+
+Now edit file, to allow pod to run . Obtain this information from below :
+kubectl get nodes
+NAME         STATUS   ROLES           AGE   VERSION
+kubernetes   Ready    control-plane   12m   v1.34.3
+linux2@kubernetes:~/ckad$ 
+
+kubectl edit node <hostname_of_system>
+Inside the file you will see something like this :
+
+spec:
+  taints:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+
+Remove above line in file
+
+After removing file your container will run.
+
+* Verify: kubectl get all
+* Remove the taint from the control node : kubectl edit nodenamex
+
+
+## Run First Application
+Command to run first application :
+    kubectl create deploy firstapp --image=nginx
 

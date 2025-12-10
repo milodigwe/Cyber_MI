@@ -1,0 +1,67 @@
+✅ STEP 1 — Update Ubuntu
+
+Open a terminal inside the VM:
+
+sudo apt update && sudo apt upgrade -y
+
+✅ STEP 2 — Install required build tools
+
+These are required for the Guest Additions kernel modules:
+
+sudo apt install build-essential dkms linux-headers-$(uname -r) -y
+
+✅ STEP 3 — Insert Guest Additions CD
+
+In the VM window menu:
+
+Devices → Insert Guest Additions CD image…
+
+If it asks to download, choose Download.
+
+This mounts /dev/cdrom inside Ubuntu.
+
+✅ STEP 4 — Install Guest Additions
+
+Run:
+
+sudo mount /dev/cdrom /media
+sudo /media/VBoxLinuxAdditions.run
+
+
+Watch for the message Installation successful.
+
+Then reboot:
+
+sudo reboot
+
+✅ STEP 5 — Enable Auto-Resize
+
+After reboot, go to:
+
+View → Auto-resize Guest Display
+
+If it’s already checked, uncheck → re-check it.
+
+You can also toggle:
+
+View → Virtual Screen 1 → Resize to <your resolution>
+
+⚙️ IMPORTANT VirtualBox Setting
+
+Before starting the VM next time, check these:
+
+Settings → Display → Graphics Controller
+
+Set to:
+
+VMSVGA
+
+And ensure:
+
+✔ Enable 3D Acceleration
+
+🎉 After this, your Ubuntu VM screen will expand automatically when you resize the VM window.
+
+If the screen is still small, tell me what happens when you run:
+
+lsmod | grep vbox
