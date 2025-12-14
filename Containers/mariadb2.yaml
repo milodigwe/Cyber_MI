@@ -1,0 +1,30 @@
+# Creates namespace mircoservice and mariadb container
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: microservice
+spec: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: microdb
+  name: microdb
+  namespace: microservice
+spec:
+  containers:
+  - env:
+    - name: MARIADB_ROOT_PASSWORD
+      value: password
+    image: mariadb:latest
+    name: microdb
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}

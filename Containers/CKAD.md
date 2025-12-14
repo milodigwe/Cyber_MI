@@ -278,3 +278,366 @@ replicaset.apps/firstapp-847875d585   1         1         0       31s
 Minikube is a tool that lets you run a single-node Kubernetes cluster locally on your computer. It’s primarily used for development, testing, and learning Kubernetes without needing a full multi-node cluster.
 
 # Pod Basic Features 
+
+## Understanding  Pods
+- Podd add Kubernetes properties to containers
+    - nodeSelector allows selection of the node that runs the Pod.
+    - priority allows for adding priortiy labels
+    - restartPolicy tells the cluster what to do if the Pod fails
+- Pods can also include volumes, which make it easy to provide storage to containerized applications.
+
+kubectl explain pod.spec | less : Show what properties go into the container yaml file.
+
+Standalone Pods are commonly used for testing and troubleshooting
+    Ex. Like Before 
+        - kubectl run podname --image=imagine_name
+        - kubectl get pods for an overview
+        - kubectl describe pod podname shows properties of running of currently running Pods
+
+## Running Pods the Devops Way
+- Provide the configuration is often provided as code. Use YAML files.
+
+* Basic Properites of Kubernetes YAML File
+    - apiVersion: specifies which verison of the API to use for this object
+    - kind: indicates the type of object (Deployment, Pod, etc)
+    - metadata: contains administrative information about the object
+    - spec: contains the specifics to define exactly how the resource is used
+    - status : added by the cluster for running resources
+* Use kubectl explain to get more information about the basic properties
+
+* In the containers spec, different parts are commonly used
+    - name : thee name of container
+    - image: the image that should be used
+    - command: the commmand the container should run
+    - args: arguments that are used by the command
+    - env : environment variables that should be used by the container
+* These are all a part of the pod.spec.containers, which can be checked with kubectl explain.
+
+* Creating Resource from YAML Files
+    - kubectl create -f resource.yaml : create resource from YAML. IF the resource already exists, it fails
+    - kubectl apply -f resource.yaml : create resource from YAML. IF the resource already exists, it will update properties that need updating
+    - kubectl delete -f resource.yaml : deletes the resource from YAML file.
+    - kubectl replace -f resource.ymal : replaces the current resource with resource specification as the YAML file.
+
+
+## Generating YAML Files
+
+* To generate YAML files, add --dry-run=client -o yaml > my.yaml
+    -Ex. kubectl run myginx --image=nginx --dry-run=client -o yaml > mynginx.yaml
+        - Next create resource as such : command  :kubectl apply -f myningx.yaal
+
+-------
+linux2@kubernetes:~$ kubectl run myginx --image=nginx --dry-run=client -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: myginx
+  name: myginx
+spec:
+  containers:
+  - image: nginx
+    name: myginx
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+linux2@kubernetes:~$ kubectl run myginx --image=nginx --dry-run=client -o yaml > mynginx.yaml
+linux2@kubernetes:~$ kubectl apply -f mynginx.yaml
+pod/myginx created
+
+
+linux2@kubernetes:~$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS      AGE
+firstapp-847875d585-p9ql5   1/1     Running   1 (96m ago)   2d15h
+myginx                      1/1     Running   0             14s
+linux2@kubernetes:~$ 
+
+
+* Mult-Container Pods
+    - There are some cases where you run multiple containers in a Pod
+        * Sidecar container:  a container that enchances the primary app for instance for logging
+        * Ambassador container: container that represents the primary container to the outside world, such as a proxy
+        * Adapter container : a container that is used to adopt the traffic or data pattern to match the traffic or data pattern in other application in the cluster
+
+## Managing Namespaces
+* To show resources in all Namespace , use kubectl get -A
+--
+inux2@kubernetes:~$ kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS    RESTARTS       AGE
+default       firstapp-847875d585-p9ql5                 1/1     Running   1 (111m ago)   2d16h
+default       myginx                                    1/1     Running   0              15m
+kube-system   calico-kube-controllers-b45f49df6-kxmpg   1/1     Running   1 (111m ago)   2d16h
+kube-system   calico-node-xn2wm                         1/1     Running   1 (111m ago)   2d16h
+kube-system   coredns-66bc5c9577-pc866                  1/1     Running   1 (111m ago)   2d16h
+kube-system   coredns-66bc5c9577-sgznz                  1/1     Running   1 (111m ago)   2d16h
+kube-system   etcd-kubernetes                           1/1     Running   1 (111m ago)   2d16h
+kube-system   kube-apiserver-kubernetes                 1/1     Running   1 (111m ago)   2d16h
+kube-system   kube-controller-manager-kubernetes        1/1     Running   1 (111m ago)   2d16h
+kube-system   kube-proxy-82rd7                          1/1     Running   1 (111m ago)   2d16h
+kube-system   kube-scheduler-kubernetes                 1/1     Running   1 (111m ago)   2d16h
+--
+* To run resources in a specific namespace, use kubectl run -n namespace
+* Use kubectl create ns nsname to create a Namespace
+
+kubectl get ns -A
+NAME              STATUS   AGE
+default           Active   2d16h
+kube-node-lease   Active   2d16h
+kube-public       Active   2d16h
+kube-system       Active   2d16h
+
+
+linux2@kubernetes:~$ kubectl run secret --image=nginx -n secret
+pod/secret created
+linux2@kubernetes:~$ kubectl get pods -n secret
+NAME     READY   STATUS    RESTARTS   AGE
+secret   1/1     Running   0          13s
+linux2@kubernetes:~$ 
+
+How to troubleshoot failing kubernetes cluster, get information about Pod status the kubernetes cluster for a failing Pod.
+
+kubectl describe pod secret -n secret
+kubectl logs secret -n secret
+kubectl exec -it pod
+kubectl exec -it secret -n secret -- sh : log into a container
+# pwd
+/
+# hostname
+secret
+# 
+
+If the pod has multiple containers, You must specify the container name. You must specify the container name:
+
+kubectl exec -it secret -n secret -c <container-name> -- sh
+
+Troubleshooting
+* Use kubectl get pods to check on current Pod status
+* Use kubectl describe pod .. to get more information about Pod status in the Kubernetes cluster for a failing Pod
+* Use kubectl logs podname to get access to Pod application output that has been logged.
+* Use kubectl exec -it podname sh to open a shell on the Pod and analyze specific components.
+
+Lab 5 : Managing Pods
+1. Create a YAML file that meets the following requirements:
+    - A Namespace with the name "microservice" is created
+    - A pod with the name "microddb", based on the mariadb image is started in this namespace
+2. Create the resource using the declarative methodology.
+
+
+1. Searches for the mariadb image
+docker search mariadb
+NAME                                         DESCRIPTION                                     STARS     OFFICIAL
+mariadb                                      MariaDB Server is a high performing open sou…   6062      [OK]
+mariadb/maxscale                             MariaDB MaxScale - The world's most advanced… 
+
+2. Pull the latst image docker pull mariadb
+Using default tag: latest
+latest: Pulling from library/mariadb
+ba2d27f4ceca: Pull complete 
+20043066d3d5: Pull complete 
+75e5c9f5eeb0: Pull complete 
+ee5b64c3e2f5: Pull complete 
+9047f410cb7d: Pull complete 
+eca7ec75082e: Pull complete 
+4be15142d46e: Pull complete 
+be922ac1f9ed: Pull complete 
+0711efb1517f: Download complete 
+c2fd0cca54b4: Download complete 
+Digest: sha256:e1bcd6f85781f4a875abefb11c4166c1d79e4237c23de597bf0df81fec225b40
+Status: Downloaded newer image for mariadb:latest
+docker.io/library/mariadb:latest
+
+3. Inspect the image
+
+kubectl run microdb --image=mariadb:latest
+pod/microdb created
+linux2@kubernetes:~$ kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS    RESTARTS      AGE
+default       firstapp-847875d585-cggqd                 1/1     Running   0             31m
+default       microdb                                   0/1     Error     1 (17s ago)   26s
+
+
+
+4. Pods Errors out, so we need to investigate why
+    - Investigate the logs from the container 
+
+kubectl logs microdb
+2025-12-14 08:25:45+00:00 [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:12.1.2+maria~ubu2404 started.
+2025-12-14 08:25:46+00:00 [Warn] [Entrypoint]: /sys/fs/cgroup///memory.pressure not writable, functionality unavailable to MariaDB
+2025-12-14 08:25:46+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+2025-12-14 08:25:46+00:00 [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:12.1.2+maria~ubu2404 started.
+2025-12-14 08:25:46+00:00 [ERROR] [Entrypoint]: Database is uninitialized and password option is not specified
+	You need to specify one of MARIADB_ROOT_PASSWORD, MARIADB_ROOT_PASSWORD_HASH, MARIADB_ALLOW_EMPTY_ROOT_PASSWORD and MARIADB_RANDOM_ROOT_PASSWORD
+
+
+5. Shows the help page on when running a container.
+kubectl run microdb --image=mariadb:latest --help
+
+--env=[]:
+	Environment variables to set in the container.
+
+6. Run container and verified its running :
+
+linux2@kubernetes:~$ kubectl run microdb --image=mariadb:latest --env=MARIADB_ROOT_PASSWORD=password
+pod/microdb created
+linux2@kubernetes:~$ kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS    RESTARTS      AGE
+default       firstapp-847875d585-cggqd                 1/1     Running   0             47m
+default       microdb                                   1/1     Running   0             5s
+
+
+7. Now lets creates a YAML File
+
+----
+First lets verify that we specified the correct arguments
+
+kubectl run microdb --image=mariadb:latest --env=MARIADB_ROOT_PASSWORD=password -n microservice
+pod/microdb created
+linux2@kubernetes:~$ kubectl get pods microservice
+Error from server (NotFound): pods "microservice" not found
+linux2@kubernetes:~$ kubectl get pods -A
+NAMESPACE      NAME                                      READY   STATUS    RESTARTS      AGE
+default        firstapp-847875d585-cggqd                 1/1     Running   0             61m
+kube-system    calico-kube-controllers-b45f49df6-ln5nh   1/1     Running   2 (51m ago)   61m
+kube-system    calico-node-xn2wm                         1/1     Running   3 (51m ago)   3d12h
+kube-system    coredns-66bc5c9577-hl6kj                  1/1     Running   2 (51m ago)   61m
+kube-system    coredns-66bc5c9577-jvs47                  1/1     Running   2 (51m ago)   61m
+kube-system    etcd-kubernetes                           1/1     Running   3 (51m ago)   3d12h
+kube-system    kube-apiserver-kubernetes                 1/1     Running   3 (51m ago)   3d12h
+kube-system    kube-controller-manager-kubernetes        1/1     Running   3 (51m ago)   3d12h
+kube-system    kube-proxy-82rd7                          1/1     Running   3 (51m ago)   3d12h
+kube-system    kube-scheduler-kubernetes                 1/1     Running   4 (51m ago)   3d12h
+microservice   microdb                                   1/1     Running   0             15s
+linux2@kubernetes:~$ kubectl get pods -n microservice
+NAME      READY   STATUS    RESTARTS   AGE
+microdb   1/1     Running   0          44s
+linux2@kubernetes:~$ 
+
+
+-----------------------
+
+8. Create the yaml file for us dry run and then we output it to a yaml file
+
+kubectl run microdb --image=mariadb:latest --env=MARIADB_ROOT_PASSWORD=password -n microservice --dry-run=client -o yaml
+
+--
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: microdb
+  name: microdb
+  namespace: microservice
+spec:
+  containers:
+  - env:
+    - name: MARIADB_ROOT_PASSWORD
+      value: password
+    image: mariadb:latest
+    name: microdb
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+linux2@kubernetes:~$ kubectl run microdb --image=mariadb:latest --env=MARIADB_ROOT_PASSWORD=password -n microservice --dry-run=client -o yaml > mariadb.yaml
+
+
+9. Now lets execute the command from the yaml file
+
+kubectl apply -f mariadb.yaml 
+pod/microdb created
+linux2@kubernetes:~$ kubectl get pods -n microservice
+NAME      READY   STATUS    RESTARTS   AGE
+microdb   1/1     Running   0          7s
+linux2@kubernetes:~$ 
+
+
+10 . Alternatively we can create the namespace separate.
+
+Two separate commands :
+
+kubectl create ns microservice --dry-run=client -o yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: microservice
+spec: {}
+status: {}
+linux2@kubernetes:~$ kubectl create ns microservice --dry-run=client -o yaml > mariadb2.yaml
+linux2@kubernetes:~$ kubectl run microdb --image=mariadb:latest --env=MARIADB_ROOT_PASSWORD=password -n microservice --dry-run=client -o yaml >> mariadb2.yaml
+
+Then edt the file and put --- between the sections so that we create resources separate.
+
+
+kubectl apply -f mariadb2.yaml 
+namespace/microservice created
+pod/microdb created
+linux2@kubernetes:~$ 
+
+
+linux2@kubernetes:~$ kubectl get pods -n microservice
+NAME      READY   STATUS    RESTARTS   AGE
+microdb   1/1     Running   0          9m23s
+linux2@kubernetes:~$ 
+
+
+# Pod Advanced Features
+* An init container is a special case of a multi-container Pod, where the init container runs to completion before the main container is started
+
+* Starting the main container depends on the suces of the init container, if the init container fails the main container will never start
+
+Run command inside container 
+
+kubectl exec -it init-demo -- cat /usr/share/nginx/html/index.html
+Defaulted container "nginx" out of: nginx, install (init)
+<html><head></head><body><header>
+<title>http://info.cern.ch</title>
+</header>
+
+
+* Sidecar Containers
+- A sidecar container is an InitContainer that has the restartPolicy field set to Always
+- It doesn occur as a specific attribute, to create a sidecar you need to create an InitContainer with the restartPolicy set to Always
+- The sidecar container will be started before the main Pod is started and is typically used to repeatedly run a command
+
+
+* Using Port Forwarding to Access Pods
+
+Pods can be accessed uin multiple ways
+    - Simple way expose a Pod port on the kubectl host that forwards to the Pod.
+    kubectl port-forward fwnginx 8080:80
+    - Port forwarding is useful for testing Pod accessbility on a specific cluster node, not to expose it to external users.
+
+Adds extra colums 
+
+ kubectl get pods -o wide
+NAME                        READY   STATUS    RESTARTS   AGE     IP              NODE         NOMINATED NODE   READINESS GATES
+firstapp-847875d585-cggqd   1/1     Running   0          126m    172.16.192.88   kubernetes   <none>           <none>
+init-demo                   1/1     Running   0          26m     172.16.192.96   kubernetes   <none>           <none>
+sidecarpod                  2/2     Running   0          7m29s   172.16.192.97   kubernetes   <none>           <none>
+
+
+How to port forward
+----
+
+linux2@kubernetes:~$ kubectl run fwnginx --image=nginx
+pod/fwnginx created
+linux2@kubernetes:~$ kubectl port-forward fwnginx 8080:80 &
+[1] 91925
+linux2@kubernetes:~$ Forwarding from 127.0.0.1:8080 -> 80
+Forwarding from [::1]:8080 -> 80
+
+linux2@kubernetes:~$ curl localhost:8080
+Handling connection for 8080
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+
+
+---
+
+## RestartPolicy
