@@ -641,3 +641,102 @@ Handling connection for 8080
 ---
 
 ## RestartPolicy
+* The Pod restartPolicy determines what happens if a container that is managed by a Pod crashes
+* If set to the default value restartPolicy=always, the container will be restarted after a crash
+* restartPolicy=always does not affect the state of the entire Pod
+* If the Pod is stopped or killed, restartPolicy=always won't restart it.
+
+To get the full yaml file of pods
+kubectl get pods nginx1 -o yaml
+
+To start the container runtime start minikube : crictl (container runtime)
+
+minikube ssh
+crictl ps 
+
+## Jobs
+- A jobs starts a Pod with the restartPolicy set to never
+- To create a Pod that runs to completion, use jobs instead
+- Jobs are useful for one-shot tasks, like backup, calculation, batch processing, and more
+-  Use spec.ttlSecondsAfterFinished to clean up completed Jobs automatically
+
+Job Types 
+
+3 different Jon types can be started, which is specified by the completions and parallelism parameters
+    - Non-parallel Jobs : one Pod is started, unless the Pod fails
+        - completions=1
+        - parallelism=1
+    - Parallel Jobs with a fixed completin count: the job is complete after successfully running as many times as specified in Jobs.spec.completions
+        - completions=n
+        - paralleslim=m
+
+For example, let’s say you have a script that needs to be run once a day. Instead of manually starting the script each day, or scheduling a regular cron job on a specific machine (which could fail or malfunction), you can create a Kubernetes Job to handle it automatically
+
+Commands to create a job
+
+kubectl create job -h | less
+kubectl create job onejob --image=busybox -- date
+kubectl get jobs,pods
+
+kubectl create job mynewjob --image=busybox --dry-run=client -o yaml -- sleep 60 > batch.yaml
+
+Added three additional parameters . Run 3 batch jobs and finish after 60 seconds.
+completions: 3
+  ttlSecondsAfterFinished: 60
+
+
+kubectl get jobs,pods
+NAME                 STATUS    COMPLETIONS   DURATION   AGE
+job.batch/mynewjob   Running   1/3           94s        94s
+
+NAME                            READY   STATUS      RESTARTS      AGE
+pod/firstapp-847875d585-cggqd   1/1     Running     1 (23m ago)   11h
+pod/fwnginx                     1/1     Running     1 (23m ago)   9h
+pod/init-demo                   1/1     Running     1 (23m ago)   9h
+pod/mynewjob-x57lq              0/1     Completed   0             94s
+pod/mynewjob-xjnk7              1/1     Running     0             27s
+pod/sidecarpod                  2/2     Running     2 (23m ago)   9h
+
+Batch jobs are running.
+
+
+## Cronjobs
+- used to run scheduled jobs
+    - To test cronjobs command: kubectl create job myjob --from=cronjob/mycronjob
+
+Creates the cronjob 
+
+kubectl create cronjob runme --image=busybox --schedule "*/2 * * * *" -- echo from the cluster
+
+Then run the cronjob at runtime only once 
+
+kubectl create job runme --from=cronjob/runme
+job.batch/runme created
+
+linux2@kubernetes:~$ kubectl get cronjobs,jobs,pods
+NAME                  SCHEDULE      TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+cronjob.batch/runme   */2 * * * *   <none>     False     0        87s             4m21s
+
+NAME                       STATUS     COMPLETIONS   DURATION   AGE
+job.batch/runme            Running    0/1           6s         6s
+job.batch/runme-29429002   Complete   1/1           11s        3m27s
+job.batch/runme-29429004   Complete   1/1           11s        87s
+
+NAME                            READY   STATUS              RESTARTS      AGE
+pod/firstapp-847875d585-cggqd   1/1     Running             1 (43m ago)   11h
+pod/fwnginx                     1/1     Running             1 (43m ago)   9h
+pod/init-demo                   1/1     Running             1 (43m ago)   9h
+pod/runme-29429002-gvmwd        0/1     Completed           0             3m27s
+pod/runme-29429004-8z295        0/1     Completed           0             87s
+pod/runme-nkmtd                 0/1     ContainerCreating   0             6s
+pod/sidecarpod                  2/2     Running             2 (43m ago)   9h
+
+
+Logs of container
+kubectl logs runme-29429006-pbxms
+from the cluster
+
+## Cleaning Up Resources 
+
+
+
