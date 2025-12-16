@@ -738,5 +738,211 @@ from the cluster
 
 ## Cleaning Up Resources 
 
+kubectl explain cronjob.spec
+    - Based of the fields in the man page we can fliter for the specif page.
+    kubectl explain cronjob.spec.jobTemplate.spec
+
+
+# Kubernetes Storage
+ When a container is started, the container working environment is created as a directory on the host runs the container.
+
+ - When cloud storage is host-bound, it needs to be synchronized when replicated Pords on different nodes
+
+ - Pod volumes are a Pod property that allow containers to connect to any storage type that is defined within the Pod
+    - PersistenVolumes are independent API resources and cand be discovered dynamically while running Pods
+
+## Configuring Pod Volume Storage
+Many types of storage can be addressed using volumes see pod.spec.volumes for a list
+
+To use a Pod volume, the container needs to mount it, using pod.spec.containers.volumeMounts
+
+Common Pod Volune Type
+- emptyDir : creates a temporary directory on the host that runs a Pod and is ephemeral
+- HostPath refers to a persistent directory on the host that runs the Pod
+- PersistentVolumeClaim connects to available PersistentVolumes
+
+
+## Configuring Persisten Volumes ###
+* A Pod volumes can use a persistent storage type
+* Pods connect to PersistenVolumes using the PersistenVolume Claim API Resource
+    - Search for "Create a persistenvolume" in kubernetes.io
+    - PersistenVolumes, manually make sure they have storageClassName property set
+
+kubectl api-resources | grep persistent
+persistentvolumeclaims              pvc          v1                                true         PersistentVolumeClaim
+persistentvolumes                   pv           v1                                false        PersistentVolume
+
+
+Then search for documentation using kubectl explain
+- This is the documentation that has the mandatory filed
+kubectl explain PersistentVolumes.spec
+
+kubectl get pv task-pv-volume
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+task-pv-volume   10Gi       RWO            Retain           Available           manual         <unset>                          87s
+
+
+## StorageClass
+- A StorageClass in Kubernetes defines how persistent storage is dynamically provisioned in a claster
+    - storage profile or blueprint that tells what kind of storage to create and how
+
+- A PersistenVolumeClaim (PVC) in Kubernetes is a request for persistent storage made by a user or application.
+
+Minikube is a local kubernetes cluster
+    - one control plane, worker node, etc..
+
+## Lab 7 : Setting up Storage ##
+* Create a PersistentVolume based on the hotPath storage type, using the directory /storage and the ReadWriteMany storage type
+
+* Run a Pod based on the Busybox image, with the sleep infifnity command as default command.. Configure this Pod such that it mounts the PV storage on the directory / data
+
+* Use kubectl cp command to copy the /etc/hosts file from your computer to the PV storage.
+Verify on the storage host that the storage has been written.
+
+
+Step 1 :
+Search for Configure Pod Persistent Storage
+
+Copy the pv-volume.yaml yaml file (PersistenVolme)
+modfiy it to add the parameters:
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: lab7-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/storage"
+
+
+** Verify pv created **
+
+kubectl get pv -A
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+lab7-pv          10Gi       RWX            Retain           Available           manual         <unset>                          9s
+
+
+Step 2 - Now create pvc  (Persisten Volume Claim)
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lab7pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3Gi
+
+
+
+kubectl get pvc,pv -A
+NAMESPACE   NAME                            STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+default     persistentvolumeclaim/lab7pvc   Bound    lab7-pv   10Gi       RWX            manual         <unset>                 103s
+
+NAMESPACE   NAME                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+            persistentvolume/lab7-pv   10Gi       RWX            Retain           Bound    default/lab7pvc   manual         <unset>                          3m38s
+
+
+At this step the status should say "Bound"
+
+
+Step -3 : (Now we crate the Pod that will use it)
+
+piVersion: v1
+kind: Pod
+metadata:
+  name: lab7pod
+spec:
+  volumes:
+    - name: task-pv-storage
+      persistentVolumeClaim:
+        claimName: lab7pvc
+  containers:
+    - name: task-pv-container
+      image: busybox
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: task-pv-storage
+
+
+Step 4 : Generate a yaml file , we need to add --sleep inifity to the Pod
+
+kubectl run dummy --image=busy --dry-run=client -o yaml -- sleep infinity
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: dummy
+  name: dummy
+spec:
+  containers:
+  - args:
+    - sleep
+    - infinity
+    image: busy
+    name: dummy
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+5. This will generate the arguments we need to add to the Pod file to mae it sleep
+    - args:
+    - sleep
+    - infinity
+
+6. Add the args to the Pod file
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lab7pod
+spec:
+  volumes:
+    - name: task-pv-storage
+      persistentVolumeClaim:
+        claimName: lab7pvc
+  containers:
+    - name: task-pv-container
+      image: busybox
+      args:
+        - sleep
+        - infinity
+      volumeMounts:
+        - mountPath: "/data"
+          name: task-pv-storage
+
+7. Now copy storage file from kubectl cp
+
+kubectl cp --help
+kubectl cp /etc/hosts lab7pod:/data
+
+Log into containers.
+kubectl exec -it lab7pod -n default -- sh
+/ # ls
+bin    data   dev    etc    home   lib    lib64  proc   root   sys    tmp    usr    var
+/ # cd data/
+/data # ls
+hosts
+/data # cat hosts
+
+kubectl describe pv lab7-pv : will show the Path of the local mount point.
+
+
+# Lession 8 : Deployments
+
+
+
 
 
