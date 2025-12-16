@@ -941,7 +941,146 @@ kubectl describe pv lab7-pv : will show the Path of the local mount point.
 
 
 # Lession 8 : Deployments
+Scalable Applications
+    - Standalone Pod cannot be scaled
+    - Deployment is standard resource for running scable statelss applications
+    - DaemonSet is a modification to a Deployment that runs one application instance on ever
+    cluster node, unless a node taint prevents it from doing so.
 
+
+* Deployments use ReplicaSet to scale application
+* For automatic application scaling, use HorizontalPodAutoscaler
+* Deployments offer updateStrategy, a property that allows applications to be upgraded
+without experiencing any downtime.
+
+## Labels and Selectors
+* A label is a key-value pair that is commonly used in Kubernetes
+    - Deployment created with kubectl create deploy automatically get the label "app=deploymentname"
+    - Pods stated with kubectl run automatically get the lable run=podname
+* The purpose of the label is to connect different objects
+    - Deployments tracking Pords
+    - Services connecting to Pods
+
+* The selector is used on resources to specify which label to track
+* As a command line argument, --selector can be used to fliter output on the presence of a label
+
+To filter the tag use :
+kubectl get all --selector app=<app_name>
+kubectl get all --selector app=myapp
+
+To look at the yaml of an deployment
+command: kubectl get deploy <app_name> -o yaml | less
+
+kubectl create deploy webapp --image=nginx --replicas=3
+deployment.apps/webapp created
+linux2@kubernetes:~/storage_task$ kubectl get deploy webapp -o yaml | less
+linux2@kubernetes:~/storage_task$ kubectl get all --selector app=webapp
+NAME                         READY   STATUS    RESTARTS   AGE
+pod/webapp-c89577dd5-7qvmn   1/1     Running   0          30s
+pod/webapp-c89577dd5-kv29p   1/1     Running   0          30s
+pod/webapp-c89577dd5-wt7lj   1/1     Running   0          30s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/webapp   3/3     3            3           30s
+
+NAME                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/webapp-c89577dd5   3         3         3       30s
+linux2@kubernetes:~/storage_task$ 
+
+Show all the labels : kubectl get pods -A --show-labels
+
+
+## Managing Labels 
+
+ubectl get deploy -A
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+default       firstapp                  1/1     1            1           5d22h
+default       webapp                    3/3     3            3           3m45s
+kube-system   calico-kube-controllers   1/1     1            1           5d23h
+kube-system   coredns                   2/2     2            2           5d23h
+linux2@kubernetes:~/storage_task$ kubectl get deploy -A --show-labels
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+default       firstapp                  1/1     1            1           5d22h   app=firstapp
+default       webapp                    3/3     3            3           3m59s   app=webapp
+kube-system   calico-kube-controllers   1/1     1            1           5d23h   k8s-app=calico-kube-controllers
+kube-system   coredns                   2/2     2            2           5d23h   k8s-app=kube-dns
+
+
+- Use kubectl label to manually set labels
+- Notice that when a label is set manually to a Deployment after its creation it will not be inherited to child resources.
+- kubectl label key - to remove the label key with its value
+
+
+kubectl create deploy bluelabel --image=nginx
+deployment.apps/bluelabel created
+
+
+linux2@kubernetes:~/storage_task$ kubectl get deploy -A --show-labels
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+default       bluelabel                 1/1     1            1           22s     app=bluelabel
+default       firstapp                  1/1     1            1           5d22h   app=firstapp
+default       webapp                    3/3     3            3           7m18s   app=webapp
+kube-system   calico-kube-controllers   1/1     1            1           5d23h   k8s-app=calico-kube-controllers
+kube-system   coredns                   2/2     2            2           5d23h   k8s-app=kube-dns
+
+Add additonal label.
+linux2@kubernetes:~/storage_task$ kubectl label deploy bluelabel state=demo
+deployment.apps/bluelabel labeled
+
+
+linux2@kubernetes:~/storage_task$ kubectl get deploy -A --show-labels
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+default       bluelabel                 1/1     1            1           101s    app=bluelabel,state=demo
+default       firstapp                  1/1     1            1           5d22h   app=firstapp
+default       webapp                    3/3     3            3           8m37s   app=webapp
+kube-system   calico-kube-controllers   1/1     1            1           5d23h   k8s-app=calico-kube-controllers
+kube-system   coredns                   2/2     2            2           5d23h   k8s-app=kube-dns
+linux2@kubernetes:~/storage_task$ 
+
+
+kubectl get all --selector app=<label> : will show label of podsa dn replicas
+kubectl get deploy --selector state=<app_name>: Will only show deployments
+
+To describe an Deployment app
+
+kubectl describe deployments.apps bluelabel
+
+kubectl describe deployments.apps <deploy_name>
+
+To unlabel a Deployment 
+linux2@kubernetes:~/storage_task$ kubectl get all --selector app=bluelabel
+NAME                             READY   STATUS    RESTARTS   AGE
+pod/bluelabel-6655494bb4-6glcs   1/1     Running   0          11m
+
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/bluelabel   1/1     1            1           11m
+
+NAME                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/bluelabel-6655494bb4   1         1         1       11m
+
+rror from server (NotFound): pods "bluelabel" not found
+
+Remove label from Pod
+linux2@kubernetes:~/storage_task$ kubectl label pod bluelabel-6655494bb4-6glcs app-
+pod/bluelabel-6655494bb4-6glcs unlabeled
+
+
+## Understanding Annotation
+- Annotations are used to store additional information
+    - This can be generic information, like notes
+    - Annotations are also used by certain Kubernetes commands to store auto managed information in the resource.
+
+Creates Notes
+
+kubectl create deploy notes --image=nginx --dry-run=client -o yaml > notes.yaml
+kubectl apply -f notes.yaml
+kubectl get deploy notes -o yaml | less
+kubectl annotate deploy notes newnote="my note"
+
+## Deployment Scalability
+* Deployments use ReplicaSet to manage the expected number of application instances
+* When an application is stated using kubectl create deploy .. -replicas=3, the ReplicaSet ensures the desired number of instances is running.
+* To manually manage application scalability, use kubectl scale deploymentname --replicas=3
 
 
 
