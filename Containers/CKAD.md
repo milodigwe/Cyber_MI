@@ -1082,6 +1082,293 @@ kubectl annotate deploy notes newnote="my note"
 * When an application is stated using kubectl create deploy .. -replicas=3, the ReplicaSet ensures the desired number of instances is running.
 * To manually manage application scalability, use kubectl scale deploymentname --replicas=3
 
+Create and scale deployment replica set
+
+kubectl create deploy scaledapp --image=nginx --replicas=3
+
+kubectl get all --selector app=scaledapp
+
+Delete Replica Set
+-----------------
+kubectl delete pod <replica_set_id>
+
+kubectl get all --selector app=scaledapp
+
+Scale down replica set
+-----------------------
+kubectl scale deployment scaleapp --replicas=2
+
+kubectl get all --selector app=scaledapp
 
 
+## Deployment Updates
+To manage how applications are updated, update strategy
+    - strategy.type.rollingUpdate : updates app instances in batches to ensure app functionality continues to be offered at any time
+        - RollingUpdate ensure different version of app will be running
+    - App that dont support offering multiple version simultanesously set strategy.type.recreate
+        - Recreate strategy brings down all app instances after which the new app version is brought up.
 
+* Managing Rolling Updates
+    - Manage Rolling Update two parameters are used:
+        maxSurge specifies how many app instances can be running during the update above the regular number of app instances
+    - maxUnavailable defines how many app instances can be temp unavailable
+        - Both parameter take an absolute number or a percentage as arggument.
+
+### Demo ###
+Create Deployment and Find Strategy and Perform a Rolling update
+
+
+linux2@kubernetes:~$ kubectl create deploy upapp --image=nginx:1.17 --replicas=5
+deployment.apps/upapp created
+linux2@kubernetes:~$ kubectl get deployments.app upapp -o yaml | grep -A5 strategy
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+
+We set Rolling Updates to 25%, Update image with set image
+
+kubectl get all --selector app=upapp
+NAME                         READY   STATUS              RESTARTS   AGE
+pod/upapp-696c9dfbd-74l7d    0/1     ContainerCreating   0          2s
+pod/upapp-696c9dfbd-dmwxw    0/1     ContainerCreating   0          3s
+pod/upapp-696c9dfbd-hwzxg    1/1     Running             0          11s
+pod/upapp-696c9dfbd-sb6t6    1/1     Running             0          11s
+pod/upapp-696c9dfbd-vrwhv    1/1     Running             0          11s
+pod/upapp-7b94687d67-cp2l9   1/1     Terminating         0          3m22s
+pod/upapp-7b94687d67-j76x5   1/1     Terminating         0          3m22s
+pod/upapp-7b94687d67-k486m   1/1     Terminating         0          3m22s
+pod/upapp-7b94687d67-qpfzp   1/1     Running             0          3m22s
+
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/upapp   4/5     5            4           3m22s
+
+NAME                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/upapp-696c9dfbd    5         5         3       11s
+replicaset.apps/upapp-7b94687d67   1         1         1       3m22s
+
+kubectl edit deployment.apps upapp
+
+
+Now we are going to change the deployment strategy to recreate
+
+Remove three lines until type
+
+ strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+
+Change type to Recrete
+
+Now change the deployment to a higer nginx version
+
+kubectl set image deploy/upapp nginx=nginx:1.19
+deployment.apps/upapp image updated
+linux2@kubernetes:~$ kubectl get all --selector app=upapp
+NAME                         READY   STATUS              RESTARTS   AGE
+pod/upapp-774dddc5cc-56jd7   0/1     ContainerCreating   0          1s
+pod/upapp-774dddc5cc-dr4m9   0/1     ContainerCreating   0          1s
+pod/upapp-774dddc5cc-gt86l   0/1     ContainerCreating   0          1s
+pod/upapp-774dddc5cc-kcwmr   0/1     ContainerCreating   0          1s
+pod/upapp-774dddc5cc-n2dzc   0/1     ContainerCreating   0          1s
+
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/upapp   0/5     5            0           13m
+
+NAME                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/upapp-696c9dfbd    0         0         0       10m
+replicaset.apps/upapp-774dddc5cc   5         5         0       1s
+replicaset.apps/upapp-7b94687d67   0         0         0       13m
+linux2@kubernetes:~$ 
+
+
+## Deployment History
+* Understanding Deployment History
+    - During the update procedure, the Deployment creates a new ReplicaSet that uses the new properties
+    - The old ReplicaSet is kept, but the number of Pods will be set to 0
+    - Command to Rollout:
+        kubectl rollout history : will show the rollout history of a specific deployment, which can easily be reverted as well
+         kubectl rollout history deployment mynginx --revision=1 to observe changes between versions
+
+
+-rw-rw-r--  1 linux2 linux2   382 Dec 17 13:16 rolling.yaml
+linux2@kubernetes:~$ kubectl create -f rolling.yaml
+deployment.apps/rolling-nginx created
+linux2@kubernetes:~$ kubectl rollout history deployment
+deployment.apps/bluelabel 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+deployment.apps/firstapp 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+deployment.apps/rolling-nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+deployment.apps/upapp 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         <none>
+
+deployment.apps/webapp 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+
+------
+Edit the container verison to  nginx: 1.17
+
+kubectl edit deployment.apps rolling-nginx
+deployment.apps/rolling-nginx edited
+linux2@kubernetes:~$ kubectl rollout history deployment rolling-nginx
+deployment.apps/rolling-nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+linux2@kubernetes:~$ kubectl describe deployments rolling-nginx
+Name:                   rolling-nginx
+Namespace:              default
+CreationTimestamp:      Wed, 17 Dec 2025 13:16:21 +0000
+Labels:                 <none>
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               app=nginx
+Replicas:               4 desired | 4 updated | 4 total | 4 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  1 max unavailable, 2 max surge
+Pod Template:
+  Labels:  app=nginx
+  Containers:
+   nginx:
+    Image:         nginx:1.17
+    Port:          <none>
+    Host Port:     <none>
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  rolling-nginx-6dcbb79877 (0/0 replicas created)
+NewReplicaSet:   rolling-nginx-79cdc8bb4c (4/4 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  2m18s  deployment-controller  Scaled up replica set rolling-nginx-6dcbb79877 from 0 to 4
+  Normal  ScalingReplicaSet  37s    deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 0 to 2
+  Normal  ScalingReplicaSet  37s    deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 4 to 3
+  Normal  ScalingReplicaSet  37s    deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 2 to 3
+  Normal  ScalingReplicaSet  32s    deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 3 to 2
+  Normal  ScalingReplicaSet  32s    deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 3 to 4
+  Normal  ScalingReplicaSet  32s    deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 2 to 1
+  Normal  ScalingReplicaSet  32s    deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 1 to 0
+
+------
+Check rollout history and rollback
+linux2@kubernetes:~$ kubectl rollout history deployment rolling-nginx --revision=2
+deployment.apps/rolling-nginx with revision #2
+Pod Template:
+  Labels:	app=nginx
+	pod-template-hash=79cdc8bb4c
+  Containers:
+   nginx:
+    Image:	nginx:1.17
+    Port:	<none>
+    Host Port:	<none>
+    Environment:	<none>
+    Mounts:	<none>
+  Volumes:	<none>
+  Node-Selectors:	<none>
+  Tolerations:	<none>
+
+linux2@kubernetes:~$ kubectl rollout history deployment rolling-nginx --revision=1
+deployment.apps/rolling-nginx with revision #1
+Pod Template:
+  Labels:	app=nginx
+	pod-template-hash=6dcbb79877
+  Containers:
+   nginx:
+    Image:	nginx:1.8
+    Port:	<none>
+    Host Port:	<none>
+    Environment:	<none>
+    Mounts:	<none>
+  Volumes:	<none>
+  Node-Selectors:	<none>
+  Tolerations:	<none>
+
+linux2@kubernetes:~$ # Rollback app
+linux2@kubernetes:~$ kubectl rollout undo deployment rolling-nginx --to-revision=1
+deployment.apps/rolling-nginx rolled back
+linux2@kubernetes:~$ kubectl describe deployments rolling-nginx
+Name:                   rolling-nginx
+Namespace:              default
+CreationTimestamp:      Wed, 17 Dec 2025 13:16:21 +0000
+Labels:                 <none>
+Annotations:            deployment.kubernetes.io/revision: 3
+Selector:               app=nginx
+Replicas:               4 desired | 3 updated | 6 total | 3 available | 3 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  1 max unavailable, 2 max surge
+Pod Template:
+  Labels:  app=nginx
+  Containers:
+   nginx:
+    Image:         nginx:1.8
+    Port:          <none>
+    Host Port:     <none>
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    ReplicaSetUpdated
+OldReplicaSets:  rolling-nginx-79cdc8bb4c (3/3 replicas created)
+NewReplicaSet:   rolling-nginx-6dcbb79877 (3/3 replicas created)
+Events:
+  Type    Reason             Age                From                   Message
+  ----    ------             ----               ----                   -------
+  Normal  ScalingReplicaSet  5m8s               deployment-controller  Scaled up replica set rolling-nginx-6dcbb79877 from 0 to 4
+  Normal  ScalingReplicaSet  3m27s              deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 0 to 2
+  Normal  ScalingReplicaSet  3m27s              deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 4 to 3
+  Normal  ScalingReplicaSet  3m27s              deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 2 to 3
+  Normal  ScalingReplicaSet  3m22s              deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 3 to 2
+  Normal  ScalingReplicaSet  3m22s              deployment-controller  Scaled up replica set rolling-nginx-79cdc8bb4c from 3 to 4
+  Normal  ScalingReplicaSet  3m22s              deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 2 to 1
+  Normal  ScalingReplicaSet  3m22s              deployment-controller  Scaled down replica set rolling-nginx-6dcbb79877 from 1 to 0
+  Normal  ScalingReplicaSet  12s                deployment-controller  Scaled up replica set rolling-nginx-6dcbb79877 from 0 to 2
+  Normal  ScalingReplicaSet  12s (x2 over 12s)  deployment-controller  (combined from similar events): Scaled up replica set rolling-nginx-6dcbb79877 from 2 to 3
+
+
+## StatefulSet
+* StatefulSet maintains the identity of Pords, even if they are restarted
+    - Required by stateful app, like databases
+* Stateful Set is required when following:
+    - Stable, unique network identifiers
+    - Stable, persistent storage
+    - Ordered, graceful deployment and scaling
+    - Ordered and automated rolling updates
+* Setting up a Stateful is easier when using helm charts
+
+* Storage must be provisioned by a PersistentVolume and will be claimed by the StatefulSet volumeClaimTemplate, which generates a PVC
+    - Deleting a StatefulSet does not not delete associated volumes
+    - While creating the Pords, every next Pod copies the config of the Pod before and adds its unique identiy.
+    - As a result, Pods are created one by one and it will take a while before all Pod instances are available
+    - As a result, Pods are created one-by-one, and it will take a while before Pods are available.
