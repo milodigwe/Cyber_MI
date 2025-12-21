@@ -1372,3 +1372,505 @@ Events:
     - While creating the Pords, every next Pod copies the config of the Pod before and adds its unique identiy.
     - As a result, Pods are created one by one and it will take a while before all Pod instances are available
     - As a result, Pods are created one-by-one, and it will take a while before Pods are available.
+
+* Stateful Storage
+- The StatefulSet volumeClaimTemplate generates a PVC that connects to a PV
+    - To connect to an existing PV, or request storage from a specific StorageClass, the storageClassName property is used.
+    - If no storageClassName property is set, storage is obtained from the default StorageClass
+    - If no StorageClass is available, make sure that PV's with the appropriate storageClass property are available.
+
+## Daemon Set
+* A DaemonSet is a Deployment that starts one Pod instance on every node in the cluster
+    - Useful when agent needs to be available
+    - When nodes are added or removed, the DaemonSet automatically changes the number of Pods accordingly.
+Daemon Set does not need a replica and strategy 
+
+kubectl create deploy daemonnginx --image=nginx --dry-run=client -o yaml > daemon.yaml
+
+List daemon and pods 
+kubectl get ds,pods
+
+## Autoscaling 
+- In a real clusters, Pods are automatically scaled based on resource usage properties that are collected by the metrics server
+- The HorizontalPodAutoscaler observes usage statistics, and after passiing a threshold will add additional replicas
+
+Demo
+-------
+1. Build Docker file from ckad file:
+
+docker build -t php-apache .
+
+2. inux2@kubernetes:~/ckad/autoscaling$ docker images
+                                                            i Info →   U  In Use
+IMAGE                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+gcr.io/k8s-minikube/kicbase:v0.0.48
+                                41454ef774d0       1.84GB          512MB        
+gcr.io/k8s-minikube/kicbase@sha256:7171c97a51623558720f8e5878e4f4637da093e2f2ed589997bedc6c1549b2b1
+                                7171c97a5162       1.84GB          512MB    U   
+mariadb:latest                  e1bcd6f85781        467MB          111MB        
+php-apache:latest               98e39e2f7433        513MB          130MB        
+linux2@kubernetes:~/ckad/autoscaling$ 
+
+
+3. Now apply the hpa.yml file
+
+kubectl apply -f hpa.yaml
+deployment.apps/php-apache created
+service/php-apache created
+
+
+
+linux2@kubernetes:~/ckad/autoscaling$ kubectl get deploy,service
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/bluelabel       1/1     1            1           24h
+deployment.apps/firstapp        1/1     1            1           6d23h
+deployment.apps/php-apache      1/1     1            1           71s
+deployment.apps/rolling-nginx   4/4     4            4           6h36m
+deployment.apps/upapp           5/5     5            5           7h
+deployment.apps/webapp          3/3     3            3           24h
+
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP   6d23h
+service/php-apache   ClusterIP   10.96.146.39   <none>        80/TCP    71s
+linux2@kubernetes:~/ckad/autoscaling$ 
+
+4. Autoscale the deployment
+
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+horizontalpodautoscaler.autoscaling/php-apache autoscaled
+linux2@kubernetes:~/ckad/autoscaling$ kubectl get hpa
+NAME         REFERENCE               TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   cpu: <unknown>/50%   1         10        1          16s
+linux2@kubernetes:~/ckad/autoscaling$ 
+
+
+5. Now time to Create some stats - Open new terminal using load-generator
+
+ubectl get hpa
+NAME         REFERENCE               TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   cpu: <unknown>/50%   1         10        1          16s
+linux2@kubernetes:~/ckad/autoscaling$ kubectl run -it load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done
+> "
+If you don't see a command prompt, try pressing enter.
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
+
+This will generator ok message for logs
+
+6. Now go back to first tab and look at the increase of metrics
+
+Create a metric server in kubernetes
+
+command: 
+
+minikube addons enable metrics-server
+💡  metrics-server is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+🌟  The 'metrics-server' addon is enabled
+
+
+
+Lession 8 Lab: Managin Deployments
+- Create a YAML file that starts a deployment for nginx
+    - It should use image version 1.9 and start 5 replicas
+    - The deployment should have the label type=proxy
+- Also configure the deployment such that when it upgraded, no more than 2 Pods will be unavailable at the same time
+
+1. Create yaml file 
+
+kubectl create deploy lab8deploy --image=nginx:1.9 --replicas=5 --dry-run=client -o yaml > lab8.yaml
+
+2. To generate a sample file run, this will give you the parameter of strategy 
+kubectl create deploy dummy --image=nginx  -o yam
+
+3. Take the strategy from the above yaml format and put it into your new yaml file.
+
+strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+
+4. Kubectl apply -f lab9_lab.yaml 
+5. List pods : kubectl get all
+
+## Installing Kubernetes Applications
+- The Helm Package Manager
+* Hwlm is Kubernetes package manager and used to streamline installing and managing Kubernetes application
+    - Helm consists of helm tool, which needs to be installed, and a chart
+    - Helm package contains: 1. Description of the package 2. One or more templates containing Kubernetes manifest files
+    - Charts can be stored locally, or accessed from remote Helm repos
+
+* Install the helm Binary
+    - Fetch binary from github. Get the latest: https://github.com/helm/helm/releases/tag/v4.0.4
+
+    - Untar the file and move it to /usr/local/bin
+
+    tar -xvf helm-v4.0.4-linux-amd64.tar.gz 
+linux-amd64/
+linux-amd64/LICENSE
+linux-amd64/README.md
+linux-amd64/helm
+
+    linux2@kubernetes:~/Downloads$ sudo !!
+sudo mv linux-amd64/helm /usr/local/bin/
+linux2@kubernetes:~/Downloads$ helm version
+version.BuildInfo{Version:"v4.0.4", GitCommit:"8650e1dad9e6ae38b41f60b712af9218a0d8cc11", GitTreeState:"clean", GoVersion:"go1.25.5", KubeClientVersion:"v1.34"}
+linux2@kubernetes:~/Downloads$ 
+
+
+    - Verify helm version
+
+
+helm version
+version.BuildInfo{Version:"v4.0.4", GitCommit:"8650e1dad9e6ae38b41f60b712af9218a0d8cc11", GitTreeState:"clean", GoVersion:"go1.25.5", KubeClientVersion:"v1.34"}
+
+----
+
+To enable bash completetion for helm
+command: source <(helm completion bash)
+
+* Helm Chart doesn't come with a default repo
+* The main site for finding Helm charts is through https://artifacthub.io
+* Search for specific software run and instlal it to run the Kubernetes Dashboard
+    - helm repo add kubernetes-dashboard
+    - https://kubernetes.github.io/dashboard
+    - helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard (Create the local app name "kubernetes-dashboard by installing applicaton "kubernetes-dashboard from repo.)
+
+Install bitnami repo 
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+"bitnami" has been added to your repositories
+linux2@kubernetes:~$ helm repo list
+NAME   	URL                               
+bitnami	https://charts.bitnami.com/bitnami
+linux2@kubernetes:~$ 
+
+
+Search repo for a particular package : 
+
+helm search repo <package>
+helm search repo file
+
+* Installing Helm Charts
+    - After adding repo, use helm repo update to ensure access to the most up to date infor
+    - helm install <name> <chart> to install the chart with default parameters
+        - Chart could be installed multiple times.
+    - After installation, use helm list to list currently installed charts
+        - To delete : helm delete chart/
+
+     helm install bitnami/mysql --generate-name
+
+     NAME: mysql-1766262289
+LAST DEPLOYED: Sat Dec 20 20:24:53 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+CHART NAME: mysql
+CHART VERSION: 14.0.3
+APP VERSION: 9.4.0
+
+kubectl get all
+NAME                           READY   STATUS    RESTARTS        AGE
+pod/dummy-7df9b6c9bb-ljglf     1/1     Running   1 (9m26s ago)   22h
+pod/mysql-1766262289-0         0/1     Pending   0               52s
+pod/webapp2-77bdbbd768-2fs4k   1/1     Running   1 (9m26s ago)   22h
+pod/webapp2-77bdbbd768-ct9dx   1/1     Running   1 (9m26s ago)   22h
+pod/webapp2-77bdbbd768-h8dvq   1/1     Running   1 (9m26s ago)   22h
+pod/webapp2-77bdbbd768-tdnk4   1/1     Running   1 (9m26s ago)   22h
+pod/webapp2-77bdbbd768-xszqp   1/1     Running   1 (9m26s ago)   22h
+
+NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes                  ClusterIP   10.96.0.1        <none>        443/TCP    10d
+service/mysql-1766262289            ClusterIP   10.106.123.155   <none>        3306/TCP   52s
+service/mysql-1766262289-headless   ClusterIP   None             <none>        3306/TCP   52s
+service/php-apache                  ClusterIP   10.96.146.39     <none>        80/TCP     3d
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/dummy     1/1     1            1           22h
+deployment.apps/webapp2   5/5     5            5           2d23h
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/dummy-7df9b6c9bb     1         1         1       22h
+replicaset.apps/webapp2-77bdbbd768   5         5         5       2d23h
+replicaset.apps/webapp2-7b784b5687   0         0         0       2d23h
+replicaset.apps/webapp2-859b6887bf   0         0         0       2d23h
+replicaset.apps/webapp2-c86f9dc6b    0         0         0       2d23h
+
+NAME                                READY   AGE
+statefulset.apps/mysql-1766262289   0/1     52s
+
+NAME                                             REFERENCE               TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   cpu: <unknown>/50%   1         10        1          3d
+linux2@kubernetes:~$ 
+
+This will show the pod mysql and the statefulset that is running
+
+A StatefulSet is a Kubernetes workload type used to run stateful applications—apps that need to keep stable identity, storage, or ordering.
+
+Think of it as:
+
+A Deployment, but for apps that care about who they are and where their data lives.
+
+Deployments are used for website, api, background workers
+Stateful sets used for databases, messag brokers, clustered systems
+
+helm show chart bitnami/mysql : show information about the chart
+
+helm show all bitnami/mysql
+
+command: helm show chart <repo>/chart_name
+
+## Managing Applications with Helm
+* Customizing Helm Applications
+    - A Helm chart consist of templates to which specific values are applied
+    - The values are stored in the values.yaml file, within the hel chart
+    - Use helm show values to list current values
+    - Create a custom values.yaml which will be merged with the generic values.yaml file: helm install .. -values values.yaml
+    - When upgrading an application, you have to use --values values.yaml as well
+
+
+* Overriding Values 
+    - Default values.yaml file which is part of the helm chart contains
+    default values which are defined as key-value pair
+    - Check doc for information about values: artifacthub.io
+    - While installing chart use custom values.yaml if
+    - helm install ... -set key=value to set indivdiual values
+
+When installing helm chart, you can set certain values, so that when downloading the packages it can ovveride the properties set.
+
+helm show values bitnami/nginx | grep commonLabels
+## @param commonLabels Add labels to all the deployed resources
+commonLabels: {}
+linux2@kubernetes:~$ vi values.yml
+
+
+Inside of values.yaml
+
+commonLabels: "type: helmapp"
+replicaCount: 3
+
+helm install bitnami/nginx --generate-name --values values.yml
+
+helm list
+NAME            	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART       	APP VERSION
+mysql-1766262289	default  	1       	2025-12-20 20:24:53.790689454 +0000 UTC	deployed	mysql-14.0.3	9.4.0      
+nginx-1766318189	default  	1       	2025-12-21 11:56:32.597517471 +0000 UTC	deployed	nginx-22.3.9	1.29.4     
+
+
+# Verify the values
+linux2@kubernetes:~$ helm get values nginx-1766318189
+USER-SUPPLIED VALUES:
+commonLabels: 'type: helmapp'
+replicaCount: 3
+linux2@kubernetes:~$ 
+
+
+Shows all the values withh --all
+
+ helm get values --all nginx-1766318189
+
+Verify deployment :
+
+kubectl get deploy --show-labels
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+dummy              1/1     1            1           38h     app=dummy
+nginx-1766318189   3/3     3            3           5m13s   app.kubernetes.io/instance=nginx-1766318189,app.kubernetes.io/managed-by=Helm,app.kubernetes.io/name=nginx,app.kubernetes.io/version=1.29.4,helm.sh/chart=nginx-22.3.9,type=helmapp
+webapp2            5/5     5            5           3d15h   app=webapp2,type=proxy
+linux2@kubernetes:~$ 
+
+
+* Helm Upgrade
+- Helm chart is the package you install from the Helm repo
+- Helm installation is an installed instance of that package
+- A Helm release is a combination between a chart and an installation
+    - Ex. To run a nginx installation withoue exposing it
+        command: helm install bitginx bitnami/nginx --set ingress.enabled=false
+
+        To make app accessbile, use helm update bitginx bitnami/nginx --set ingress.enabled=true
+Verify you have the most up to date Helm repo
+    - Fetch the latest version of charts from the repo
+        helm repo update
+    - Use helm upgrade bitginx bitnami/nginx to upgrade to the latest version of the application
+
+Alternative way to use kubectl is kustomize 
+    - Kustomize is a Kubernetes feature that uses a file with the name kustomization.yaml to apply changes to a set of resources
+        - Use kubectl apply -k ./ in the directory with kustomization.yaml and the files it refers to apply changes
+        kubectl delete -k ./ delete resources created by kustomization.
+
+
+Lab9 : Install the Hashicorp Lab
+
+Open a browser and go to artifacthub.io
+type vault
+
+This will provide the steps to install the repo and chart
+
+
+
+linux2@kubernetes:~$ helm repo add hashicorp https://helm.releases.hashicorp.com
+"hashicorp" has been added to your repositories
+linux2@kubernetes:~$ helm install my-hash-vault hashicorp/vault --version 0.31.0
+NAME: my-hash-vault
+LAST DEPLOYED: Sun Dec 21 12:23:27 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://developer.hashicorp.com/vault/docs
+
+
+Your release is named my-hash-vault. To learn more about the release, try:
+
+  $ helm status my-hash-vault
+  $ helm get manifest my-hash-vault
+linux2@kubernetes:~$ 
+
+# Services and Networking
+- A Service is an API resource that is used to exposte a set of Pods
+    - Services are applying round-robin load balancing to forward traffic to specific Pods
+    - The set of Pods that is targeted by a Service is determined by a selector and include these in the Service.
+    If the Pods are added ore removed, they immediately show up in the service
+
+* Services and Decoupling
+    - Servies exist independenttly from the app the provide access to
+    - Service needs to be created independenlty of the app and after removing an app, it needs to be removed separetly
+    - THe only thing they do is watch for Pods that have a specific label set matching the selector that is specified in the service
+    - That means the one service can provide access to pods in multiple deployments and kubernetes will automatically load balance between thse Pods (used in canary deployments)
+
+
+* Service Types
+ - ClusterIP: this default type exposes the service on an internal cluster IP address
+ - NodePort: allocates a specific port on the node that forwards to the service IP address on the cluster network
+ - LoadBalancer : provisions an external load balancer to hadnle incoming traffic to apps in public cloud
+ - ExternalName : work on DNS names, redirection is happening at a DNS level, which is ful in migration
+ - Headless: a service used in cases where direct communication with Pods is required which is ued in StatefullSet.
+
+ * Creating Services
+    - kubectl expose can be used to create  Services, providing access to DEployments, ReplicaSets, Pods or other servies
+    - kubectl expose exposes a Deployment, which allocates its Pods as the servie endpoint
+    - kubectl create service can be used as an alternative solution to create services
+    - Whil creating a service , the --port arguement must be specificed to indicate the port on whicch the service will be listening for incoming traffic
+
+Service Port
+targetPort: the port on the app(container) that the servie addresses
+port: the port on which the service is accessible
+nodePort: that port that is exposed externally while using the NoePort service type.
+
+
+inux2@kubernetes:~$ kubectl create deployment nginxsvc --image=nginx
+deployment.apps/nginxsvc created
+linux2@kubernetes:~$ kubectl scale deployment nginxsvc --replicas=3
+deployment.apps/nginxsvc scaled
+linux2@kubernetes:~$ kubectl get deploy
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+dummy                          1/1     1            1           39h
+my-hash-vault-agent-injector   1/1     1            1           32m
+nginx-1766318189               3/3     3            3           59m
+nginxsvc                       3/3     3            3           35s
+webapp2                        5/5     5            5           3d15h
+linux2@kubernetes:~$ kubectl expose deployment nginxsvc --port=80
+service/nginxsvc exposed
+linux2@kubernetes:~$ kubectl get all --selector app=nginxsvc
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/nginxsvc-5985d79656-n45rg   1/1     Running   0          73s
+pod/nginxsvc-5985d79656-xlght   1/1     Running   0          89s
+pod/nginxsvc-5985d79656-xz5hz   1/1     Running   0          73s
+
+NAME               TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/nginxsvc   ClusterIP   10.96.38.58   <none>        80/TCP    24s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginxsvc   3/3     3            3           89s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginxsvc-5985d79656   3         3         3       89s
+linux2@kubernetes:~$ 
+
+
+linux2@kubernetes:~$ kubectl describe svc nginxsvc
+Name:                     nginxsvc
+Namespace:                default
+Labels:                   app=nginxsvc
+Annotations:              <none>
+Selector:                 app=nginxsvc
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.96.38.58
+IPs:                      10.96.38.58
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+Endpoints:                172.16.192.94:80,172.16.192.96:80,172.16.192.69:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+linux2@kubernetes:~$ 
+
+
+Verify the output in yaml format:
+
+kubectl get svc nginxsvc -o yaml
+
+Get endpoints :
+kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                               ENDPOINTS                                                                 AGE
+kubernetes                         10.0.2.15:6443                                                            10d
+my-hash-vault                      <none>                                                                    38m
+my-hash-vault-agent-injector-svc   172.16.192.90:8080                                                        38m
+my-hash-vault-internal             <none>                                                                    38m
+mysql-1766262289                   <none>                                                                    16h
+mysql-1766262289-headless          <none>                                                                    16h
+nginx-1766318189                   172.16.192.109:8443,172.16.192.121:8443,172.16.192.124:8443 + 3 more...   65m
+nginxsvc                           172.16.192.69:80,172.16.192.94:80,172.16.192.96:80                        5m19s
+php-apache                         <none>                                               
+
+Get the Svc's available
+
+inux2@kubernetes:~$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                               ENDPOINTS                                                                 AGE
+kubernetes                         10.0.2.15:6443                                                            10d
+my-hash-vault                      <none>                                                                    38m
+my-hash-vault-agent-injector-svc   172.16.192.90:8080                                                        38m
+my-hash-vault-internal             <none>                                                                    38m
+mysql-1766262289                   <none>                                                                    16h
+mysql-1766262289-headless          <none>                                                                    16h
+nginx-1766318189                   172.16.192.109:8443,172.16.192.121:8443,172.16.192.124:8443 + 3 more...   65m
+nginxsvc                           172.16.192.69:80,172.16.192.94:80,172.16.192.96:80                        5m19s
+php-apache                         <none>                                                                    3d17h
+linux2@kubernetes:~$ kubectl get svc
+NAME                               TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+kubernetes                         ClusterIP      10.96.0.1        <none>        443/TCP                      10d
+my-hash-vault                      ClusterIP      10.103.33.235    <none>        8200/TCP,8201/TCP            39m
+my-hash-vault-agent-injector-svc   ClusterIP      10.108.96.78     <none>        443/TCP                      39m
+my-hash-vault-internal             ClusterIP      None             <none>        8200/TCP,8201/TCP            39m
+mysql-1766262289                   ClusterIP      10.106.123.155   <none>        3306/TCP                     16h
+mysql-1766262289-headless          ClusterIP      None             <none>        3306/TCP                     16h
+nginx-1766318189                   LoadBalancer   10.98.98.30      <pending>     80:30397/TCP,443:32407/TCP   66m
+nginxsvc                           ClusterIP      10.96.38.58      <none>        80/TCP                       6m24s
+php-apache                         ClusterIP      10.96.146.39     <none>        80/TCP                       3d17h
+linux2@kubernetes:~$ 
+
+
+Get your svc address and log into minikube.
+Curl your service ip. From minikube this will work, because you are curling internally.
+
+To fix edit the service file for nginxsvc
+Change ClusterIP to NodePort
+
+Then you will be able to reach webpage by curling minikube ip with none
+standard port you will get from kubectl get svc ip.
+
+## Service Resources in Microservices 
+
