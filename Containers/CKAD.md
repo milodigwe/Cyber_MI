@@ -1873,4 +1873,149 @@ Then you will be able to reach webpage by curling minikube ip with none
 standard port you will get from kubectl get svc ip.
 
 ## Service Resources in Microservices 
+- Understanding Microservices
+ - Microservices architecture, different frontend and backend Pods used to provide the application
+    - Backend Pods (like databases) should be exposed internally only, using the ClusterIP Service type
+    - Frontend Pods (like webservers) should be exposed for external access, using the NodePort Service type of the Ingress resource
+    - For more advanced traffic management in microservices, a service  mesh can be used.
+
+## Service and DNS
+ - Exposed Services automatically register with the Kubernetes intenal coredns DNS server 
+    - The standard DNS name is composed as servicename.namespace.svc.clustername
+    - As a result, Pods within the same namespace can access servicename by using its short name
+    - To access servicenames in other Namespaces, the fully qualified domain must be used.
+
+Demo
+------
+Describing the kube-dns from the kube-system namespace
+
+linux2@kubernetes:~$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   11d
+kube-node-lease   Active   11d
+kube-public       Active   11d
+kube-system       Active   11d
+
+linux2@kubernetes:~$ kubectl get svc -n kube-system
+NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                  AGE
+kube-dns         ClusterIP   10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP   11d
+metrics-server   ClusterIP   10.105.222.82   <none>        443/TCP                  6h42m
+linux2@kubernetes:~$ 
+
+kubectl describe svc -n kube-system kube-dns
+Name:                     kube-dns
+Namespace:                kube-system
+Labels:                   k8s-app=kube-dns
+                          kubernetes.io/cluster-service=true
+                          kubernetes.io/name=CoreDNS
+
+The Endpoint Ip is the IP that provides internal DNS
+1. Create a new namespace named elsewhere
+2. Create a pod named nginxpod in  elsewhere namespace nginx image
+3. Expose port 80 on new pod
+
+linux2@kubernetes:~$ kubectl create ns elsewhere
+namespace/elsewhere created
+linux2@kubernetes:~$ kubectl run nginxpod -n elsewhere --image=nginx
+pod/nginxpod created
+linux2@kubernetes:~$ kubectl expose -n elsewhere pod nginxpod --port=80
+
+service/nginxpod exposed
+
+
+---------------
+4. Create a testpod in regular namespace
+    kubectl run testpod --image=busybox -- sleep infinity
+
+5. Create new pod in default namespace
+kubectl run testpod --image=busybox -- sleep infinity
+pod/testpod created
+
+6. kubectl exec -it testpod -- cat /etc/resolv.conf
+nameserver 10.96.0.10
+search default.svc.cluster.local svc.cluster.local cluster.local mynetworksettings.com
+options ndots:5
+linux2@kubernetes:~$ 
+
+7. Since we exposed port 80 on the elsehwere pod and we know fqdn of the dns name we can use that.
+
+8. Lets query the pod running in the elsewhere namespace
+
+kubectl exec -it testpod -- wget --spider --timeout=1 nginxpod.elsewhere.svc.cluster.local
+Connecting to nginxpod.elsewhere.svc.cluster.local (10.110.159.82:80)
+remote file exists
+
+
+## Network Policy
+
+By default, there are no restrictions to network traffic in k8s
+    - Pod can always communicate, evne if they're in other namespaces
+    - To limit this, networkPolicies can be used
+    - NetworkPolicies need to be supported by the network plugin though
+    - If in a policy there is no match , traffic will be denied.
+    - If no NetworkPolicy is used , all traffic is allowed.
+* Network Policy three different identifiers
+    - podSelector: specifies a label to match Pods
+    - namespaceSelector: used to grant access to specific namespace
+    - ipBlock: marks a range of IP addresses that is allowd. Notice that traffic to and from the node where a Pod is running is always allowed
+        - When defining a Pod or namespace networkPolicy a selector label is used to specify what traffic is allowed to and from the Pods that match the selector.  
+            - NetworkPolicies do not conflict
+
+## Demo
+Pre
+Verify that the calico-node Pod is running in kube-system namespace.
+
+wget --spider is a safe “check only” mode.
+It does not download anything — it just tests whether a URL is reachable.
+
+linux2@kubernetes:~/ckad$ kubectl exec -it busybox -- wget --spider --timeout=1 nginx
+Connecting to nginx (10.104.68.158:80)
+remote file exists
+linux2@kubernetes:~/ckad$ kubectl describe networkpolicy
+Name:         access-nginx
+Namespace:    default
+Created on:   2025-12-22 21:35:05 +0000 UTC
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     app=nginx
+  Allowing ingress traffic:
+    To Port: <any> (traffic allowed to all ports)
+    From:
+      PodSelector: access=true
+  Not affecting egress traffic
+  Policy Types: Ingress
+
+Add label to the busybox pod, so that it can be added to network policy.
+
+linux2@kubernetes:~/ckad$ kubectl label pod busybox access=true
+pod/busybox labeled
+
+New Pod has the new label :
+
+kubectl describe pod busybox
+Name:             busybox
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Mon, 22 Dec 2025 21:35:05 +0000
+Labels:           access=true
+                  app=sleepy
+
+## Advanced Networking : Gateway API and Istio
+- Gateway API provides routing and traffic management policies
+    - uses custom resources for managing incoming ingress and outogin egress traffic
+- Istio : a service mesh and makes managing complex relations between applications in a microservice easier
+    - Provides rules for managing traffic in microservices. Optional in additon to network policies.
+
+Lesson 10: Managing Services
+- Create a namespace with the name "Remote"
+- In the remote Namespace, run an nginx pod with the name "Remoteweb" and expose it such that it can be reached on the minikube host post 31999.
+- In default namespace, run the pod testpod , based on busy bos image and using the sleep infiity commadn as its default command
+
+- From the testpod Pod , use wget --spider --timeout=1 to verify you can access the default webpage of the remoteweb Pod
+- Also verify that this web page is accessible on minkube host port 31000.
+
+
 
