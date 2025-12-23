@@ -2017,5 +2017,22 @@ Lesson 10: Managing Services
 - From the testpod Pod , use wget --spider --timeout=1 to verify you can access the default webpage of the remoteweb Pod
 - Also verify that this web page is accessible on minkube host port 31000.
 
+kubectl create -n remote
+kubectl run pod remoteweb -n remote --image=nginx
+kubectl expose pod remoteweb -n remote --port=80
+
+THen edit remoteweb file
+kubectl edit svc remotweb -n remote:
+
+Add in nodeport = 3199
+and then change type from ClusterIP to NodePort
+
+Then test connection to port
+find the minikube ip: 
+
+curl the minikube ip : curl 192.168.49.2:3199 : returns port 80.
+
+
+
 
 
