@@ -2034,5 +2034,222 @@ curl the minikube ip : curl 192.168.49.2:3199 : returns port 80.
 
 
 
+## Managing Incoming Traffic
+## Understanding Ingress
+- Ingress is used to provide external access to internal Kubernetes cluster resources
+      - Ingress uses an external load balancer
+      - This load balancer is implemented by the Ingress controller which is running as a Kubernetes application.
+      - As an API resource, Ingress uses Service to connect to Pods that are used as a service endpoint.
+      - To access resource in the cluster, the host name resolution must be configured to resolve the Ingress load balancer IP.
+
+- Ingress controller is a Pod not a file
+      - Ingress exposes HTTP and HTTPS routes from outside the cluster to Pods within the cluster.
+      - Traffic routing is controlled by rules defined on the ingress resource.
 
 
+
+## Installing Ecosystem Ingress Controllers
+      - How to install ingress controller.
+
+ helm upgrade --install ingress-nginx ingress-nginx --repo http://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+
+controlplane ~ ➜  kubectl get pods -n ingress-nginx
+NAME                                        READY   STATUS    RESTARTS   AGE
+ingress-nginx-controller-6c657c6487-tbd4v   0/1     Running   0          18s
+
+controlplane ~ ➜  kubectl get pods -n ingress-nginx
+NAME                                        READY   STATUS    RESTARTS   AGE
+ingress-nginx-controller-6c657c6487-tbd4v   1/1     Running   0          49s
+
+
+## Using the Minikube Ingress Controller
+- minikube is a Kubernetes distribution and comes with addons to integret thrid-part solutions
+    - Use minikube addons list to show available addons
+    - Use minikube addons enable to enable a specific addon
+
+
+Minikube, add-ons are pre-packaged Kubernetes components and services that you can easily enable or disable to extend the functionality of your local Kubernetes cluster.
+
+Add-ons let you:
+
+Install common Kubernetes services without manual YAML files
+
+Quickly set up development and testing environments
+
+Enable features that are often needed in real clusters
+
+The Ingress add-on in Minikube provides a ready-to-use Ingress Controller so you can route external HTTP/HTTPS traffic to services inside your Kubernetes cluster.
+
+Traffic Flow :
+
+Browser → Minikube IP → Ingress Controller → Service → Pod
+
+minikube addons list : list addons
+
+2. Enable ingress addons 
+minikube addons enable ingress
+
+
+*** If Pods will not start you need to check the kubectl scheduler Pod.
+
+The Pod would not start, so i deleted all resources within in the ingress-nginx namespace
+
+linux2@kubernetes:~$ kubectl -n ingress-nginx  delete all
+
+Then sleep 10.
+
+Re-ran the minikube enable addons ingress  : command.
+
+The Pods came up successfully.
+
+linux2@kubernetes:~$ kubectl -n ingress-nginx describe pod ingress-ng
+
+ing). Image size: 323984203 bytes.
+  Normal   Created      4m29s                kubelet                   Created container: controller
+  Normal   Started      4m28s                kubelet                   Started container controller
+  Normal   RELOAD       4m26s                nginx-ingress-controller  NGINX reload triggered due t
+
+
+** Only the controller needs to be consistently running:
+
+kubectl get all -n ingress-nginx
+NAME                                           READY   STATUS      RESTARTS   AGE
+pod/ingress-nginx-admission-create-tmxjg       0/1     Completed   0          8m5s
+pod/ingress-nginx-admission-patch-s8n4l        0/1     Completed   0          8m4s
+pod/ingress-nginx-controller-9cc49f96f-2rh7w   1/1     Running     0          8m5s
+
+NAME                                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+service/ingress-nginx-controller             NodePort    10.97.132.108   <none>        80:32360/TCP,443:32067/TCP   8m5s
+service/ingress-nginx-controller-admission   ClusterIP   10.110.86.81    <none>        443/TCP                      8m5s
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/ingress-nginx-controller   1/1     1            1           8m5s
+
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/ingress-nginx-controller-9cc49f96f   1         1         1       8m5s
+
+NAME                                       STATUS     COMPLETIONS   DURATION   AGE
+job.batch/ingress-nginx-admission-create   Complete   1/1           9s         8m5s
+job.batch/ingress-nginx-admission-patch    Complete   1/1           8s         8m5s
+linux2@kubernetes:~$ 
+
+
+kubectl apply → API Server → Admission → Controller → Pods
+
+Two different systems are involved:
+
+Admission (webhooks) → decide if a request is allowed / modified
+
+Before the Ingress object is stored:
+
+Admission checks:
+
+Is it valid?
+
+Should defaults be added?
+
+Is it allowed by policy?
+
+-------------------------------
+Controllers → make the cluster match the desired state
+
+ou create a Deployment:
+
+replicas: 3
+
+
+Controller logic:
+
+“I see only 1 Pod”
+
+“I need 3 Pods”
+
+Creates 2 more Pods
+
+-----------------------------------
+
+## Using Ingress
+## DEMO ##
+
+1. Help menu for creating ingress
+kubectl create ingress -h
+Create an ingress with the specified name.
+
+2. We will create a rule that will forward ingress traffic to a service.
+
+Created ingress service called nginxsvc
+
+linux2@kubernetes:~$ kubectl create ingress nginxsvc --rule="/=nginxsvc:80"
+ingress.networking.k8s.io/nginxsvc created
+linux2@kubernetes:~$ 
+
+This will route any ingress request for nginxsvc to port 80 .
+nginxsvc is our minikube ip
+
+
+3. linux2@kubernetes:~$ minikube ip
+192.168.49.2
+
+Add this ip to /etc/hosts
+
+4. kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        14d
+nginx        ClusterIP   10.104.68.158    <none>        80/TCP         2d16h
+nginxsvc     NodePort    10.110.135.103   <none>        80:31303/TCP   4d
+
+
+5. Describe ingress service, you can see the path of the rule we set for ingress service
+
+linux2@kubernetes:~$ kubectl describe ingress nginxsvc
+Name:             nginxsvc
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host        Path  Backends
+  ----        ----  --------
+  *           
+              /   nginxsvc:80 (10.244.0.32:80,10.244.0.31:80,10.244.0.35:80)
+Annotations:  <none>
+Events:
+  Type    Reason  Age                    From                      Message
+  ----    ------  ----                   ----                      -------
+  Normal  Sync    3m58s (x2 over 4m56s)  nginx-ingress-controller  Scheduled for sync
+
+
+6. Curl endpoint:
+
+curl nginxsvc.info
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title
+
+## Ingress Rules
+- An optional host to be used as a name-based virtualhost. If no host is specified, the rule applies to all inbound HTTP traffic
+- A list of paths (like/testpath). Each path has its own backend. Paths can be exposed as a regular expression
+- The backend, which is a service resource. It is common to configure a default backend in an gress controller for incoming traffic that doesnt match a specific path.
+
+The ingress pathType specifies how to deal with path requests
+THe Exact pathType indicates that an exact match should occur
+    - If the path is set to /foo and request is /foo/ there is no mathc
+The Prefix pathType indicates that the requested path should start with
+    - If the path is set /, any requested path will match
+    - If the path is set /foo, /foo as well as /foo/ will match
+
+## Ingress Types
+- Ingress backend by a single Service : there is one that defines access to one backend Service
+    - kubectl create ingress single --rule="/files=fileservice:80"
+
+- Single fanout: there are two or more rules defining different paths that refer to different services
+    - kubectl create ingress single --rule="/files=filesservice:80" -- rule="/db=dbservice:80"
+
+- Name-baed virtual hosting: There are two or more rules that route requests baed on the host header,
+** MAke sure dns entry for each host header
+    - kubectl create ingress multihost --
+    rule="my.example.com/files*=filesservice:80" -- rule="my.example.org/data*=dataservice:80"
+
+## Demo: Name-baed Virtual Host
