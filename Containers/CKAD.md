@@ -3,6 +3,9 @@
 https://github.com/sandervanvugt/ckad 
 Github repo
 
+CKAD Exam objectives from cncf 
+https://github.com/cncf/curriculum/blob/master/CKAD_Curriculum_v1.34.pdf
+
 Kubernetes resources
 https://devopscube.com/kubernetes-tutorials-beginners/
 
@@ -2252,4 +2255,574 @@ The Prefix pathType indicates that the requested path should start with
     - kubectl create ingress multihost --
     rule="my.example.com/files*=filesservice:80" -- rule="my.example.org/data*=dataservice:80"
 
+
+When deleting namepace get stuck To remove a namespace that is stuck at "Terminating"
+
+🚑 Force delete a stuck namespace (safe here)
+Step 1: Get namespace JSON
+kubectl get ns ingress-nginx -o json > ingress-nginx.json
+
+Step 2: Remove finalizers
+
+Edit the file:
+
+nano ingress-nginx.json
+
+
+Find this section:
+
+"spec": {
+  "finalizers": [
+    "kubernetes"
+  ]
+}
+
+
+Change it to:
+
+"spec": {
+  "finalizers": []
+}
+
+
+Save and exit.
+
+Step 3: Force finalize deletion
+kubectl replace --raw "/api/v1/namespaces/ingress-nginx/finalize" -f ingress-nginx.json
+
+✅ Verify deletion
+kubectl get ns ingress-nginx
+
+
+You should now see:
+
+Error from server (NotFound)
+
+🧹 Extra cleanup (IMPORTANT for your earlier error)
+
+Check for leftover webhook:
+
+kubectl get validatingwebhookconfiguration | grep nginx
+
+
+If you see:
+
+ingress-nginx-admission
+
+
+Delete it:
+
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission
+
+
+This step prevents the webhook timeout error you hit earlier.
+
+
+
+To fix deployment issue:
+-----------------------
+
+linux2@kubernetes:~$ kubectl get pods -n ingress-nginx
+NAME                                        READY   STATUS    RESTARTS   AGE
+ingress-nginx-controller-6c657c6487-bzw26   1/1     Running   0          72s
+linux2@kubernetes:~$ minikube addons enable ingress
+💡  ingress is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+    ▪ Using image registry.k8s.io/ingress-nginx/controller:v1.13.2
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+🔎  Verifying ingress addon...
+🌟  The 'ingress' addon is enabled
+linux2@kubernetes:~$ kubectl get pod -n ingress-nginx
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-lntl7        0/1     Completed   0          77s
+ingress-nginx-admission-patch-mlqpl         0/1     Completed   0          77s
+ingress-nginx-controller-6db8d8cccd-rsdpg   1/1     Running     0          77s
+linux2@kubernetes:~$ kubectl get all -n ingress-nginx
+NAME                                            READY   STATUS      RESTARTS   AGE
+pod/ingress-nginx-admission-create-lntl7        0/1     Completed   0          97s
+pod/ingress-nginx-admission-patch-mlqpl         0/1     Completed   0          97s
+pod/ingress-nginx-controller-6db8d8cccd-rsdpg   1/1     Running     0          97s
+
+NAME                                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+service/ingress-nginx-controller             NodePort    10.108.178.33   <none>        80:32721/TCP,443:32553/TCP   3m25s
+service/ingress-nginx-controller-admission   ClusterIP   10.106.179.1    <none>        443/TCP                      3m25s
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/ingress-nginx-controller   1/1     1            1           3m26s
+
+NAME                                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/ingress-nginx-controller-6c657c6487   0         0         0       3m26s
+replicaset.apps/ingress-nginx-controller-6db8d8cccd   1         1         1       98s
+
+NAME                                       STATUS     COMPLETIONS   DURATION   AGE
+job.batch/ingress-nginx-admission-create   Complete   1/1           12s        98s
+job.batch/ingress-nginx-admission-patch    Complete   1/1           11s        98s
+linux2@kubernetes:~$ kubectl describe ingress nginxsvc
+Error from server (NotFound): ingresses.networking.k8s.io "nginxsvc" not found
+linux2@kubernetes:~$ kubectl create ingress nginxsvc --rule="/=nginxsvc:80"
+ingress.networking.k8s.io/nginxsvc created
+linux2@kubernetes:~$ kubectl describe ingress nginxsvc
+Name:             nginxsvc
+Labels:           <none>
+Namespace:        default
+Address:          
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host        Path  Backends
+  ----        ----  --------
+  *           
+              /   nginxsvc:80 (<error: services "nginxsvc" not found>)
+Annotations:  <none>
+Events:
+  Type    Reason  Age   From                      Message
+  ----    ------  ----  ----                      -------
+  Normal  Sync    4s    nginx-ingress-controller  Scheduled for sync
+linux2@kubernetes:~$ minikube ip
+192.168.49.2
+linux2@kubernetes:~$ curl nginxsvc.info
+<html>
+<head><title>503 Service Temporarily Unavailable</title></head>
+<body>
+<center><h1>503 Service Temporarily Unavailable</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+linux2@kubernetes:~$ kubectl describe ingress nginxsvc
+Name:             nginxsvc
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host        Path  Backends
+  ----        ----  --------
+  *           
+              /   nginxsvc:80 (<error: services "nginxsvc" not found>)
+Annotations:  <none>
+Events:
+  Type    Reason  Age                From                      Message
+  ----    ------  ----               ----                      -------
+  Normal  Sync    12s (x2 over 52s)  nginx-ingress-controller  Scheduled for sync
+linux2@kubernetes:~$ kubectl create deployment nginxsvc --image=nginx
+deployment.apps/nginxsvc created
+linux2@kubernetes:~$ kubectl expose deployment nginxsvc --port=80 --target-port=80
+service/nginxsvc exposed
+linux2@kubernetes:~$ kubectl get svc nginxsvc
+NAME       TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+nginxsvc   ClusterIP   10.105.99.36   <none>        80/TCP    7s
+linux2@kubernetes:~$ curl nginxsvc.info
+<html>
+<head><title>503 Service Temporarily Unavailable</title></head>
+<body>
+<center><h1>503 Service Temporarily Unavailable</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+linux2@kubernetes:~$ kubectl edit svc nginxsvc
+service/nginxsvc edited
+linux2@kubernetes:~$ curl nginxsvc.info
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+linux2@kubernetes:~$ kubectl describe ingress nginxsvc
+Name:             nginxsvc
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host        Path  Backends
+  ----        ----  --------
+  *           
+              /   nginxsvc:80 (10.244.0.12:80)
+Annotations:  <none>
+Events:
+  Type    Reason  Age                   From                      Message
+  ----    ------  ----                  ----                      -------
+  Normal  Sync    7m1s (x2 over 7m41s)  nginx-ingress-controller  Scheduled for sync
+
+
+------------------------------
+
 ## Demo: Name-baed Virtual Host
+1. Create two deployments called saturn and mars. 
+2. Expose both deployments on port 80
+3. Add entries to /etc/hosts
+
+
+linux2@kubernetes:~$ kubectl create deploy mars --image=nginx
+deployment.apps/mars created
+linux2@kubernetes:~$ kubectl create deploy saturn --image=nginx
+deployment.apps/saturn created
+linux2@kubernetes:~$ for i in mars saturn ; do kubectl expose deploy $i --port=80 ; done
+service/mars exposed
+service/saturn exposed
+linux2@kubernetes:~$ minikube ip
+192.168.49.2
+linux2@kubernetes:~$ minikube ip >> /etc/hosts
+bash: /etc/hosts: Permission denied
+linux2@kubernetes:~$ sudo vi /etc/hosts
+
+4. Test pining hostname
+5. Once successfully pinging, Created an ingress rule for both saturn and mars each to match name mars and saturn respectfully.
+
+
+kubectl create ingress multihost --rule="mars.example.com/=mars:80" --rule="saturn.example.com/=saturn:80"
+ingress.networking.k8s.io/multihost created
+linux2@kubernetes:~$ 
+
+6. For this demo, we need to edit the config file and  change the Patch type from Exact to Prefix
+
+Example :
+
+- host: saturn.example.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: saturn
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+
+linux2@kubernetes:~$ kubectl edit ingress multihost
+ingress.networking.k8s.io/multihost edited
+linux2@kubernetes:~$ 
+
+
+curl mars
+curl saturn
+
+This should return a valid nginx endpoint
+
+
+
+
+IF installation fails verify that helm package is installed. When you delete all resources all resources in namespace gets deleted. The helm provides a package that creates a service for the pods to run.
+
+
+1, First install helm deployments,
+2. Then enable minikube addons
+3. If release is stuck in "Terminating", delete minkikube and start it again"
+
+
+* Gateway API use specific API resources
+    - To wor with Gateway API, A Gateway API controller needs to be installed.
+    - You must install the helm package first.
+
+* Gateway Class
+    - The GatewayClass resource represents the physical Gateway Controller
+        - Uses spec.controllerName to connect to a specific GatewayController
+Once Gateway is required
+    - Gateway uses gatewayClass Name property.
+    - It also defines listerns to specify which protocols  should be serviced
+
+Routes incoming traffic to be forwarded
+    - Incoming requests identified by spec.hostnames
+    - The parentRef property connects to HTTPRoute to a Gateway, then backendRefs property connects the HTTPRoute to a Service
+
+### Demo Step to Creae a API Gateway"
+* Understanding the Procedure
+    1. Make sure the required custome resources are available
+
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+Warning: unrecognized format "int64"
+customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io created
+Warning: unrecognized format "int32"
+customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io created
+
+----------
+
+    2. Next, install a community Gateway API controller (Helm deployment)
+
+helm install ngf oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric --create-namespace -n nginx-gateway
+Pulled: ghcr.io/nginxinc/charts/nginx-gateway-fabric:1.5.1
+Digest: sha256:5a8e2fb46822c756dfe32af8bf9e09cd63808e4316b564c74c3d0afb3c828d45
+I1226 13:08:21.958617  100262 warnings.go:110] "Warning: unrecognized format \"int32\""
+I1226 13:08:21.959435  100262 warnings.go:110] "Warning: unrecognized format \"int64\""
+I1226 13:08:22.100468  100262 warnings.go:110] "Warning: unrecognized format \"int64\""
+I1226 13:08:22.134242  100262 warnings.go:110] "Warning: unrecognized format \"int32\""
+I1226 13:08:22.257118  100262 warnings.go:110] "Warning: unrecognized format \"int32\""
+I1226 13:08:22.257338  100262 warnings.go:110] "Warning: unrecognized format \"int64\""
+I1226 13:08:22.322882  100262 warnings.go:110] "Warning: unrecognized format \"int64\""
+NAME: ngf
+LAST DEPLOYED: Fri Dec 26 13:08:22 2025
+NAMESPACE: nginx-gateway
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+
+
+***
+kubectl get pods,svc -n nginx-gateway
+NAME                                            READY   STATUS             RESTARTS      AGE
+pod/ngf-nginx-gateway-fabric-85df46c4fb-fsncv   1/2     CrashLoopBackOff   1 (16s ago)   86s
+
+NAME                               TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ngf-nginx-gateway-fabric   LoadBalancer   10.105.250.165   <pending>     80:30423/TCP,443:30909/TCP   86s
+linux2@kubernetes:~$ kubectl logs -n nginx-gateway ngf-nginx-gateway-fabric-85df46c4fb-fsncv
+
+"level":"error","ts":"2025-12-26T13:10:22Z","msg":"error received after stop sequence was engaged","error":"leader election lost","stacktrace":"sigs.k8s.io/controller-runtime/pkg/manager.(*controllerManager).engageStopProcedure.func1\n\tpkg/mod/sigs.k8s.io/controller-runtime@v0.19.1/pkg/manager/internal.go:512"}
+failed to start control loop: failed to prepare the first batch: no matches for kind "GRPCRoute" in version "gateway.networking.k8s.io/v1"
+
+
+
+This fails due to version being outdated
+
+Find the latest version here:
+
+https://github.com/kubernetes-sigs/gateway-api/releases
+
+
+To fix, we need to install the new package version v1.4.1
+Then delete the pod ngf-nginx-gateway pod
+Then list pod and svc
+
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml
+Warning: unrecognized format "int64"
+Warning: unrecognized format "int32"
+customresourcedefinition.apiextensions.k8s.io/backendtlspolicies.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io configured
+customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io configured
+customresourcedefinition.apiextensions.k8s.io/grpcroutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io configured
+customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io configured
+linux2@kubernetes:~$ kubectl get pods,svc -n nginx-gateway
+NAME                                            READY   STATUS             RESTARTS        AGE
+pod/ngf-nginx-gateway-fabric-85df46c4fb-fsncv   1/2     CrashLoopBackOff   6 (2m51s ago)   10m
+
+NAME                               TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ngf-nginx-gateway-fabric   LoadBalancer   10.105.250.165   <pending>     80:30423/TCP,443:30909/TCP   10m
+linux2@kubernetes:~$ kubectl delete pod ngf-nginx-gateway-fabric-85df46c4fb-fsncv -n nginx-gateway
+pod "ngf-nginx-gateway-fabric-85df46c4fb-fsncv" deleted
+linux2@kubernetes:~$ kubectl get pods,svc -n nginx-gateway
+NAME                                            READY   STATUS    RESTARTS   AGE
+pod/ngf-nginx-gateway-fabric-85df46c4fb-zqn4l   2/2     Running   0          8s
+
+NAME                               TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ngf-nginx-gateway-fabric   LoadBalancer   10.105.250.165   <pending>     80:30423/TCP,443:30909/TCP   10m
+linux2@kubernetes:~$ 
+
+****
+-------
+
+kubectl edit -n nginx-gateway svc ngf-nginx-gateway-fabric
+* Change the svc file from loadbalancer to NodePort
+
+kubectl edit -n nginx-gateway svc ngf-nginx-gateway-fabric
+service/ngf-nginx-gateway-fabric edited
+linux2@kubernetes:~$ kubectl get pods,svc -n nginx-gateway
+NAME                                            READY   STATUS    RESTARTS   AGE
+pod/ngf-nginx-gateway-fabric-85df46c4fb-zqn4l   2/2     Running   0          6m43s
+
+NAME                               TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ngf-nginx-gateway-fabric   NodePort   10.105.250.165   <none>        80:30423/TCP,443:30909/TCP   17m
+
+
+
+    3. Verify the community Gateway Controller is ready to accept incoming requests
+
+## Using Gateway API
+
+Create deployment and expose port 80
+
+ kubectl create deployment nginxgw --image=nginx --replicas=3
+deployment.apps/nginxgw created
+linux2@kubernetes:~$ kubectl expose deploy nginxgw --port=80
+service/nginxgw exposed
+
+Then go to course file ckad > http-routing.yaml
+
+inux2@kubernetes:~/ckad$ #Apply http-routing.yaml file
+linux2@kubernetes:~/ckad$ kubectl apply -f http-routing.yaml
+------------------
+gateway.gateway.networking.k8s.io/example-gateway created
+httproute.gateway.networking.k8s.io/example-route created
+-----------
+linux2@kubernetes:~/ckad$ # Addin localhost to resolve /etc/hosts
+linux2@kubernetes:~/ckad$ sudo sh -c "echo 127.0.0.1 whatever.com >> /etc/hosts"
+
+* Configuring Port Forwarding
+
+linux2@kubernetes:~/ckad$ kubectl -n nginx-gateway port-forward ngf-nginx-gateway-fabric-85df46c4fb-zqn4l 8080:80 8443:443 &
+[1] 128068
+
+linux2@kubernetes:~/ckad$ Forwarding from 127.0.0.1:8080 -> 80
+Forwarding from [::1]:8080 -> 80
+Forwarding from 127.0.0.1:8443 -> 443
+Forwarding from [::1]:8443 -> 443
+
+linux2@kubernetes:~/ckad$ curl whatever.com
+curl: (7) Failed to connect to whatever.com port 80 after 1 ms: Couldn't connect to server
+linux2@kubernetes:~/ckad$ curl whatever.com:8080
+Handling connection for 8080
+<!DOCTYPE html>
+<html>
+<head>
+
+Edit the /etc/hosts for whatever.com and make it your minikube ip
+
+kubectl get pods,svc -n nginx-gateway
+NAME                                            READY   STATUS    RESTARTS   AGE
+pod/ngf-nginx-gateway-fabric-85df46c4fb-zqn4l   2/2     Running   0          19m
+
+NAME                               TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ngf-nginx-gateway-fabric   NodePort   10.105.250.165   <none>        80:30423/TCP,443:30909/TCP   3
+
+
+Internally Port is 80: 30423 is our NodePort. 30423 is the port we can curl and will be able to listen on our gatewat service
+
+linux2@kubernetes:~/ckad$ curl whatever.com:30423
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; 
+
+
+
+    4. Create the Kubernetes application you want to provide access to.
+    5. Configure GatewayClass, Gateway, and HTTPRoute
+    6. Test by accessing the Service that exposes the community controller
+
+
+
+
+## Troubleshooting Networking
+kubectl get pods -o wide : shows Pod IP addresses
+kubectl get svc shows Services
+kubectl describe svc .. shows Service succesful connection to Pods
+    - Check selector and label are matching
+kubectl get netpol -A shows if any NetworkPolicies are operational
+kubectl describe ing  : shows Ingress configuration: look for endpoints
+    - If Ingress shows no endpoints, ensure the Service is uses does show them.
+
+
+## Lesson 11 Lab : Managing Incoming Traffic
+* Create a Deployment with the name "lab11web", based on the nginx container image and running 3 Pod instances.
+* Make this Deployment accessible at the virtual hostname lab11web.example.com
+
+
+
+linux2@kubernetes:~/ckad$ kubectl create deploy lab11web --image=nginx --replicas=3
+deployment.apps/lab11web created
+linux2@kubernetes:~/ckad$ kubectl get deploy,pods -A
+NAMESPACE       NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+default         deployment.apps/lab11web                   3/3     3            3           19s
+default         deployment.apps/mars                       1/1     1            1           96m
+default         deployment.apps/nginxgw                    3/3     3            3           43m
+default         deployment.apps/nginxsvc                   1/1     1            1           112m
+default         deployment.apps/saturn                     1/1     1            1           96m
+ingress-nginx   deployment.apps/ingress-nginx-controller   1/1     1            1           121m
+kube-system     deployment.apps/coredns                    1/1     1            1           130m
+nginx-gateway   deployment.apps/ngf-nginx-gateway-fabric   1/1     1            1           63m
+
+NAMESPACE       NAME                                            READY   STATUS      RESTARTS       AGE
+default         pod/lab11web-f99ffdf8f-4z89x                    1/1     Running     0              19s
+default         pod/lab11web-f99ffdf8f-bmqb5                    1/1     Running     0              19s
+default         pod/lab11web-f99ffdf8f-rkqtg                    1/1     Running     0              19s
+default         pod/mars-7854db465-8r6q8                        1/1     Running     0              96m
+default         pod/nginxgw-7f99f9f4d4-2zldz                    1/1     Running     0              43m
+default         pod/nginxgw-7f99f9f4d4-5sl7c                    1/1     Running     0              43m
+default         pod/nginxgw-7f99f9f4d4-rcgpv                    1/1     Running     0              43m
+default         pod/nginxsvc-5985d79656-llgnf                   1/1     Running     0              112m
+default         pod/saturn-8f9f6d467-s8ngh                      1/1     Running     0              96m
+ingress-nginx   pod/ingress-nginx-admission-create-lntl7        0/1     Completed   0              119m
+ingress-nginx   pod/ingress-nginx-admission-patch-mlqpl         0/1     Completed   0              119m
+ingress-nginx   pod/ingress-nginx-controller-6db8d8cccd-rsdpg   1/1     Running     0              119m
+kube-system     pod/coredns-66bc5c9577-hcftx                    1/1     Running     0              129m
+kube-system     pod/etcd-minikube                               1/1     Running     0              130m
+kube-system     pod/kube-apiserver-minikube                     1/1     Running     0              130m
+kube-system     pod/kube-controller-manager-minikube            1/1     Running     0              130m
+kube-system     pod/kube-proxy-bq5hz                            1/1     Running     0              130m
+kube-system     pod/kube-scheduler-minikube                     1/1     Running     0              130m
+kube-system     pod/storage-provisioner                         1/1     Running     1 (129m ago)   130m
+nginx-gateway   pod/ngf-nginx-gateway-fabric-85df46c4fb-zqn4l   2/2     Running     0              52m
+
+
+linux2@kubernetes:~/ckad$ kubectl get deploy
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+lab11web   3/3     3            3           33s
+mars       1/1     1            1           96m
+nginxgw    3/3     3            3           43m
+nginxsvc   1/1     1            1           113m
+saturn     1/1     1            1           96m
+linux2@kubernetes:~/ckad$ kubectl get deploy,pods | grep "lab11web"
+deployment.apps/lab11web   3/3     3            3           65s
+pod/lab11web-f99ffdf8f-4z89x    1/1     Running   0          65s
+pod/lab11web-f99ffdf8f-bmqb5    1/1     Running   0          65s
+pod/lab11web-f99ffdf8f-rkqtg    1/1     Running   0          65s
+linux2@kubernetes:~/ckad$ kubectl expose deploy lab11web --port=80
+service/lab11web exposed
+
+--
+inux2@kubernetes:~/ckad$ kubectl create ingress multihost-lab11 --rule="lab11web.example.com/=lab11web:80"
+ingress.networking.k8s.io/multihost-lab11 created
+linux2@kubernetes:~/ckad$ kubectl edit ing multihost-lab11
+ingress.networking.k8s.io/multihost-lab11 edited
+linux2@kubernetes:~/ckad$ curl lab11web.example.com
+<!DOCTYPE html>
+<html>
+<head>
+
+--
+
+kubectl get ing
+NAME              CLASS   HOSTS                                 ADDRESS        PORTS   AGE
+multihost         nginx   mars.example.com,saturn.example.com   192.168.49.2   80      105m
+multihost-lab11   nginx   lab11web.example.com                  192.168.49.2   80      4m33s
+nginxsvc          nginx   *                                     192.168.49.2   80      126m
+linux2@kubernetes:~/ckad$ kubectl describe ing multihost-lab11
+Name:             multihost-lab11
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host                  Path  Backends
+  ----                  ----  --------
+  lab11web.example.com  
+                        /   lab11web:80 (10.244.0.20:80,10.244.0.22:80,10.244.0.21:80)
+Annotations:            <none>
+Events:
+  Type    Reason  Age                    From                      Message
+  ----    ------  ----                   ----                      -------
+  Normal  Sync    3m48s (x3 over 4m48s)  nginx-ingress-controller  Scheduled for sync
+
+** Inside of this log file :
+
+kubectl explain ingress.spec : You will find resource pages and man pages
+
+
+# Modeule 5 : Application Environment Configuratiom and Security
+## ConfigMaps and Secrets
