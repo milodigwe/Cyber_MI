@@ -2874,4 +2874,132 @@ deployment.apps/mydb created
 
 ------------------
 ## Providing Variables with ConfigMaps 
+* Understanding ConfigMaps
+    - The ConfigMap is an API resource to store specific information
+        - Two different uses: Variable storage and Config files storage up to a size of 1MiB
+    - If bigger amounts of data are need , they should be stored in a Pod Volume
+
+Use kubectl create cm to create a ConfigMap,
+    --from-literal key=value
+    --from-env-file=/path/to/file
+
+An environment file is a file that has multiple varaibles defined on different lines
+Add --dry-run=client -o yaml to generate YAML code instead of creating the resources
+
+The easy way to use variables from ConfigMaps using kubectl set env
+    - kubectl set env --from=configmap /mycm deploy/mydeploy
+    - While using kubectl set env, the --prefix option can be used to put a prefix before the variables as defined in the ConfigMap
+
+## DEMO: Working with ConfigMaps ##
+Config Maps is like a secrets manager that stores variables
+
+
+ux2@kubernetes:~$ kubectl create deploy mydb --image=mariadb --replicas=3
+deployment.apps/mydb created
+linux2@kubernetes:~$ kubectl create cm mydbvars --from-literal=ROOT_PASSWORD=password
+configmap/mydbvars created
+linux2@kubernetes:~$ kubectl get cm mydbvars -o yaml
+apiVersion: v1
+data:
+  ROOT_PASSWORD: password
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2025-12-27T18:03:49Z"
+  name: mydbvars
+  namespace: default
+  resourceVersion: "16145"
+  uid: 64c001f3-ff7f-4163-8055-e4f1b4d21460
+linux2@kubernetes:~$ kubectl set env deploy/mydbbb --from configmap/mydbvars --prefix=MARIADB_
+Error from server (NotFound): deployments.apps "mydbbb" not found
+linux2@kubernetes:~$ kubectl set env deploy/mydb --from configmap/mydbvars --prefix=MARIADB_
+deployment.apps/mydb env updated
+linux2@kubernetes:~$ kubectl get deploy mydb -o yaml | grep env -A 5
+      - env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: ROOT_PASSWORD
+              name: mydbvars
+linux2@kubernetes:~$ #The end this above shows how the password is reference in the configMAp
+linux2@kubernetes:~$ exit
+
+
+## Using Configuration Files
+    - ConfipMap can contain one or more configuration files.
+    - In the data section of the ConfigMap, each file is referred to with its own key
+    - To use configuration files from ConfigMaps, the Config needs to be used as a Pod volume and mounted on a directory.
+
+# Creating index file
+linux2@kubernetes:~$ echo hello world > index.html
+linux2@kubernetes:~$ # Creating ConfigMap myindex
+linux2@kubernetes:~$ kubectl create cm myindex --from-file=index.html
+configmap/myindex created
+linux2@kubernetes:~$ kubectl get cm --show-labels=myindex
+error: invalid argument "myindex" for "--show-labels" flag: strconv.ParseBool: parsing "myindex": invalid syntax
+See 'kubectl get --help' for usage.
+linux2@kubernetes:~$ kubectl get cm --selector=myindex
+No resources found in default namespace.
+linux2@kubernetes:~$ kubectl get cm -A
+NAMESPACE         NAME                                                   DATA   AGE
+default           kube-root-ca.crt                                       1      30h
+default           mydbvars                                               1      18m
+default           myindex                                                1      42s
+ingress-nginx     ingress-nginx-controller                               1      30h
+ingress-nginx     kube-root-ca.crt                                       1      30h
+ingress-nginx     tcp-services                                           0      30h
+ingress-nginx     udp-services                                           0      30h
+kube-node-lease   kube-root-ca.crt                                       1      30h
+kube-public       cluster-info                                           1      30h
+kube-public       kube-root-ca.crt                                       1      30h
+kube-system       coredns                                                1      30h
+kube-system       extension-apiserver-authentication                     6      30h
+kube-system       kube-apiserver-legacy-service-account-token-tracking   1      30h
+kube-system       kube-proxy                                             2      30h
+kube-system       kube-root-ca.crt                                       1      30h
+kube-system       kubeadm-config                                         1      30h
+kube-system       kubelet-config                                         1      30h
+nginx-gateway     kube-root-ca.crt                                       1      29h
+nginx-gateway     nginx-includes-bootstrap                               1      29h
+linux2@kubernetes:~$ kubectl describe cm myindex
+Name:         myindex
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+index.html:
+----
+hello world
+
+
+
+BinaryData
+====
+
+Events:  <none>
+linux2@kubernetes:~$ # Create Deployment for myweb
+linux2@kubernetes:~$ kubectl create deploy myweb --image=nginx
+deployment.apps/myweb created
+linux2@kubernetes:~$ # Edit deployment apps for myweb
+linux2@kubernetes:~$ kubectl edit deployments.app
+
+## Secrets
+Understanding Secrets
+    - A secret is a base-64 encoded alternative for a ConfigMap
+        Secret types used for tpyical scenarios
+            generic: used for generic sensitive values like password
+            tls: stores TLS keys
+
+## Configure Applications to use Secrets
+Different use cases for using secrets in applications
+    - To provide TLS keys to the application: kubectl create secret tls my-tls-keys --cert=tls/my.crt --key=tls/my.key
+    - To provide security to passwords: kubectl create secret generic my-secret-pw -- from-literal=password=verysecret
+    - To provide access to an SSH private key: kubectl create secret generic my-ssh-key --from-file=ssh-private-key=.ssh/id_rsa
+    - To provide acces to sensitive files, which would be mounted in the application with root access only: kubectl create secret generic my-secret-file --from-file=/my/secretfile
+
+If it contains variables, use kubectl set env 
+If it contains files, mount the secret.
+    - While mounting the secret in pod spec use defaultMode
+    - Notice that mounted secrets are automatically updated in the application when the secret is updated.
 
