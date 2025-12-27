@@ -2826,3 +2826,52 @@ kubectl explain ingress.spec : You will find resource pages and man pages
 
 # Modeule 5 : Application Environment Configuratiom and Security
 ## ConfigMaps and Secrets
+
+* A ConfigMap in Kubernetes is an object used to store non-secret configuration data (settings, files, environment values) separately from application code.
+    - Settings file for your app that kubernetes manages. Stored outside your container.
+
+* Provide Variables to Kubernetes Application
+ - To run a varaible in a Deployment use the set command when running.
+1. First, use kubectl create deploy mydb --image=mariadb
+2. Next, use kubectl set env deploy mydb MYSQL_ROOT_PASSWORD=password
+
+- When running a Pod, environment variables can be provided, but shouldnt run naked Pods
+    - kubectl run mydb --image=mysql -- env="MYSQL_ROOT_PASSWORD=password"
+
+## Demo: Generating a YAML File with Variables
+kubectl create deploy mydb --image=mariadb
+
+linux2@kubernetes:~$ kubectl describe pod mydb-6447978996-6sxvw
+Name:             mydb-6447978996-6sxvw
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Sat, 27 Dec 2025 14:05:10 +0000
+Labels:           app=mydb
+                  pod-template-hash=6447978996
+
+kubectl logs mydb-6447978996-6sxvw
+2025-12-27 14:05:13+00:00 [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:12.1.2+maria~ubu2404 started.
+2025-12-27 14:05:13+00:00 [Warn] [Entrypoint]: /sys/fs/cgroup///memory.pressure not writable, functionality unavailable to MariaDB
+
+
+kubectl set env deploy mydb MARIADB_ROOT_PASSWORD=password
+
+
+linux2@kubernetes:~$ kubectl get deploy mydb -o yaml > mariadb_deploy.yaml
+linux2@kubernetes:~$ kubectl get deploy mydb
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+mydb   1/1     1            1           30m
+linux2@kubernetes:~$ kubectl delete deploy mydb
+deployment.apps "mydb" deleted
+linux2@kubernetes:~$ kubectl apply -f mariadb
+mariadb2.yaml   mariadb_deploy  mariadb.yaml    
+linux2@kubernetes:~$ kubectl apply -f mariadb_deploy ^C
+linux2@kubernetes:~$ mv mariadb_deploy mariadb_deploy.yaml
+linux2@kubernetes:~$ kubectl apply -f mariadb_deploy.yaml 
+deployment.apps/mydb created
+
+------------------
+## Providing Variables with ConfigMaps 
+
