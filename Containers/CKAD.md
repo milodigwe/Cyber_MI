@@ -3145,3 +3145,45 @@ replicaset.apps/secretlab-7f6c5cdd66   0         0         0       23m
 replicaset.apps/secretlab-7fcc5cfd74   0         0         0       21m
 replicaset.apps/secretlab-85ff877678   0         0         0       21m
 replicaset.apps/secretlab-86c8658db4   1         1         1       3m23s
+
+
+# Deploying Applications the DevOps Way
+- GitOps operator picks up changes and applies them to Kubernetes cluster in an automated way
+
+## Blue/ Green Deployment
+
+Create a deployment which is your blue deployment.
+Then once completed, You need to add your app to etc hosts file
+After that deploy your green deployment. Once app is successful. THen which it over in your deployment 
+  kubectl edit ing myapp.
+
+Then scale dwon blue deployment
+
+kubectl scale deploy blue-deploy --replicas=0
+
+## Demo : Ingress Based Blue/Green Deployments Ingress ##
+
+
+Part 1: Creating the Blue application
+  cd ~/ckad/kustomize-bluegreen/blue 
+  cat files inside dir
+  kubectl apply -k .
+  kubectl get deploy,pods,svc,cm,ing
+
+Part 2: Testing application access
+sudo sh -c "echo $(minikube ip) myapp.local >> /etc/hosts
+In browser: http://myapp.local
+
+
+Part 3 : Creating the Green application
+cd ~/ckad/kustomize-bluegreen/green
+cat *
+kubectl apply -k .
+
+Part 4: Making the Switch
+sed -i -e 's/blue-svc/green-svc/'myapp-ing.yaml
+kubectl apply -f myapp-ing.yaml
+curl http://myapp.local
+kubectl deploy blue-deploy --replicas=0
+
+### Demo: Service Based Blue/Green Deployment ###
