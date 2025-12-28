@@ -1,0 +1,20 @@
+AWS IAM Identity Center (AWS SSO) allows you to connect to your on-premises Active Directory service using SAML 2.0. With this, you can enable automatic provisioning by using the System for Cross-domain Identity Management (SCIM) v2.0 protocol, which allows for the management of user identities in a single location.
+
+429 : Too many request
+    - To resolve implement api throttling 
+
+S3 Intelligent-Tiering automatically moves data to the lowest-cost tier
+    -Lazy loading:
+
+Only files actually accessed are loaded from S3
+
+https://aws.amazon.com/blogs/storage/new-enhancements-for-moving-data-between-amazon-fsx-for-lustre-and-amazon-s3/
+
+
+By default, every account and OU has the FullAWSAccess SCP attached, which allows all AWS services unless explicitly restricted.
+    - To restrict accounts to specific services: 
+        1. Detach FullAWSAccess
+        2. Attach a custom SCP with explicit Alloq statements
+
+Cost and Usage (CUR) must be created in the AWS Organizations management account 
+    - CUR automatically includes all members accounts

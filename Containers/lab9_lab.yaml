@@ -1,0 +1,30 @@
+# Create read replicas and rolling update
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: webapp2
+    type: proxy
+  name: webapp2
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: webapp2
+  strategy: 
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 2  
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: webapp2
+    spec:
+      containers:
+      - image: nginx:1.15
+        name: nginx
+        resources: {}
+status: {}
