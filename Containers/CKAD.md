@@ -3187,3 +3187,183 @@ curl http://myapp.local
 kubectl deploy blue-deploy --replicas=0
 
 ### Demo: Service Based Blue/Green Deployment ###
+
+linux2@kubernetes:~$ cd ~/ckad/
+linux2@kubernetes:~/ckad$ cd kustomize-bluegreen/
+linux2@kubernetes:~/ckad/kustomize-bluegreen$ ls
+blue  green
+linux2@kubernetes:~/ckad/kustomize-bluegreen$ cd green/
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl create deploy blue-nginx --image=nginx:1.14 --replicas=3
+deployment.apps/blue-nginx created
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl expose deploy blue-nginx --port=80 --name=bgnginx
+service/bgnginx exposed
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get deploy blue-nginx -o yaml > green-nginx.yaml
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ # Modify every occurance from blue to green in green-nginx.yaml
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ 
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ vi green-nginx.yaml 
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl create -f green-nginx.yaml
+deployment.apps/green-nginx created
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl create get pods 
+error: Unexpected args: [get pods]
+See 'kubectl create -h' for help and examples
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get pods 
+NAME                           READY   STATUS    RESTARTS      AGE
+blue-nginx-cd95759fc-5vfxd     1/1     Running   0             4m58s
+blue-nginx-cd95759fc-9zp74     1/1     Running   0             4m58s
+blue-nginx-cd95759fc-dzb5l     1/1     Running   0             4m58s
+green-nginx-7d94b99d94-62j5f   1/1     Running   0             63s
+green-nginx-7d94b99d94-7w429   1/1     Running   0             63s
+green-nginx-7d94b99d94-pc8cq   1/1     Running   0             63s
+lab11web-f99ffdf8f-4z89x       1/1     Running   3 (22h ago)   2d22h
+lab11web-f99ffdf8f-bmqb5       1/1     Running   3 (22h ago)   2d22h
+lab11web-f99ffdf8f-rkqtg       1/1     Running   3 (22h ago)   2d22h
+mars-7854db465-8r6q8           1/1     Running   3             3d
+mydb-5777b67687-2s5tb          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-5bxbd          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-cwdwp          1/1     Running   2 (22h ago)   43h
+mynewdb-746cb84dd6-fnvz5       1/1     Running   1 (22h ago)   34h
+nginxgw-7f99f9f4d4-2zldz       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-5sl7c       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-rcgpv       1/1     Running   3 (22h ago)   2d23h
+nginxsvc-5985d79656-llgnf      1/1     Running   3 (22h ago)   3d
+saturn-8f9f6d467-s8ngh         1/1     Running   3 (22h ago)   3d
+secretlab-86c8658db4-nvfs7     1/1     Running   0             21h
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+bgnginx      ClusterIP   10.107.86.104    <none>        80/TCP         4m39s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        3d1h
+lab11web     ClusterIP   10.111.97.161    <none>        80/TCP         2d22h
+mars         ClusterIP   10.105.78.46     <none>        80/TCP         3d
+nginxgw      ClusterIP   10.102.192.91    <none>        80/TCP         2^[[I^[[2;2R^[[3;1R^[[>61;7600;1c^[]10;rgb:ffff/ffff/ffff^G^[]11;rgb:3030/0a0a/2424^G^[P1$r0 q^[\^[[?12;4$yd23h
+nginxsvc     NodePort    10.105.99.36     <none>        80:30639/TCP   3d
+saturn       ClusterIP   10.105.193.168   <none>        80/TCP         3d
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl delete svc bgnginx; kubectl expose deploy green-nginx --port=80 --name=bgnginx
+service "bgnginx" deleted
+service/bgnginx exposed
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get pods 
+NAME                           READY   STATUS    RESTARTS      AGE
+blue-nginx-cd95759fc-5vfxd     1/1     Running   0             6m52s
+blue-nginx-cd95759fc-9zp74     1/1     Running   0             6m52s
+blue-nginx-cd95759fc-dzb5l     1/1     Running   0             6m52s
+green-nginx-7d94b99d94-62j5f   1/1     Running   0             2m57s
+green-nginx-7d94b99d94-7w429   1/1     Running   0             2m57s
+green-nginx-7d94b99d94-pc8cq   1/1     Running   0             2m57s
+lab11web-f99ffdf8f-4z89x       1/1     Running   3 (22h ago)   2d23h
+lab11web-f99ffdf8f-bmqb5       1/1     Running   3 (22h ago)   2d23h
+lab11web-f99ffdf8f-rkqtg       1/1     Running   3 (22h ago)   2d23h
+mars-7854db465-8r6q8           1/1     Running   3             3d
+mydb-5777b67687-2s5tb          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-5bxbd          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-cwdwp          1/1     Running   2 (22h ago)   43h
+mynewdb-746cb84dd6-fnvz5       1/1     Running   1 (22h ago)   34h
+nginxgw-7f99f9f4d4-2zldz       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-5sl7c       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-rcgpv       1/1     Running   3 (22h ago)   2d23h
+nginxsvc-5985d79656-llgnf      1/1     Running   3 (22h ago)   3d
+saturn-8f9f6d467-s8ngh         1/1     Running   3 (22h ago)   3d
+secretlab-86c8658db4-nvfs7     1/1     Running   0             21h
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+bgnginx      ClusterIP   10.100.13.183    <none>        80/TCP         31s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        3d1h
+lab11web     ClusterIP   10.111.97.161    <none>        80/TCP         2d22h
+mars         ClusterIP   10.105.78.46     <none>        80/TCP         3d
+nginxgw      ClusterIP   10.102.192.91    <none>        80/TCP         2d23h
+nginxsvc     NodePort    10.105.99.36     <none>        80:30639/TCP   3d
+saturn       ClusterIP   10.105.193.168   <none>        80/TCP         3d
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl delete deployments.apps blue-nginx
+deployment.apps "blue-nginx" deleted
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+bgnginx      ClusterIP   10.100.13.183    <none>        80/TCP         62s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        3d1h
+lab11web     ClusterIP   10.111.97.161    <none>        80/TCP         2d23h
+mars         ClusterIP   10.105.78.46     <none>        80/TCP         3d
+nginxgw      ClusterIP   10.102.192.91    <none>        80/TCP         2d23h
+nginxsvc     NodePort    10.105.99.36     <none>        80:30639/TCP   3d
+saturn       ClusterIP   10.105.193.168   <none>        80/TCP         3d
+
+
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ kubectl get pods 
+NAME                           READY   STATUS    RESTARTS      AGE
+green-nginx-7d94b99d94-62j5f   1/1     Running   0             4m1s
+green-nginx-7d94b99d94-7w429   1/1     Running   0             4m1s
+green-nginx-7d94b99d94-pc8cq   1/1     Running   0             4m1s
+lab11web-f99ffdf8f-4z89x       1/1     Running   3 (22h ago)   2d23h
+lab11web-f99ffdf8f-bmqb5       1/1     Running   3 (22h ago)   2d23h
+lab11web-f99ffdf8f-rkqtg       1/1     Running   3 (22h ago)   2d23h
+mars-7854db465-8r6q8           1/1     Running   3             3d
+mydb-5777b67687-2s5tb          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-5bxbd          1/1     Running   2 (22h ago)   43h
+mydb-5777b67687-cwdwp          1/1     Running   2 (22h ago)   43h
+mynewdb-746cb84dd6-fnvz5       1/1     Running   1 (22h ago)   34h
+nginxgw-7f99f9f4d4-2zldz       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-5sl7c       1/1     Running   3 (22h ago)   2d23h
+nginxgw-7f99f9f4d4-rcgpv       1/1     Running   3 (22h ago)   2d23h
+nginxsvc-5985d79656-llgnf      1/1     Running   3 (22h ago)   3d
+saturn-8f9f6d467-s8ngh         1/1     Running   3 (22h ago)   3d
+secretlab-86c8658db4-nvfs7     1/1     Running   0             21h
+linux2@kubernetes:~/ckad/kustomize-bluegreen/green$ #Officially shift traffic over to green
+
+-----------------------------------------
+
+## Canary Deployments
+- A Canary Deployment upgrade strategy will expose a new version of the application to a limited number of users before completing the migration to the new version
+  - This allows user exposure with minimized risk
+  - Preferred to use ingress. Ingress-based Canary deployments are using two ingress resources pointing to the same Ingress virtual host
+
+## Demo Canary Deployments ##
+
+Lesson 13 Lab : Canary Deployments
+- Run a Deployment with the name oldbird, based on the nginx:1.18
+- Run a Deployment with the name "newbird", based on the nginx:latest image
+- Expose this Deployment using a NodePorn Service in such a way that approximately 90% of the traffic is going to be directed to the old nginx version, and 10% will be directed to the new nginx version.
+
+
+1. Create deployment with oldbird output to old.yaml file
+  - Edit the old.yaml file and  add in the label type: bird under the app section.
+
+  linux2@kubernetes:~$ kubectl create deploy oldbird --image=nginx:1.18 --dry-run=client -o yaml > old.yaml
+linux2@kubernetes:~$ vi old.yaml 
+
+linux2@kubernetes:~$ kubectl apply -f old.yaml
+deployment.apps/oldbird created
+linux2@kubernetes:~$ 
+
+
+linux2@kubernetes:~$ kubectl get all --selector app=oldbird
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/oldbird-669d8f9cdc-mphdl   1/1     Running   0          42s
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/oldbird   1/1     1            1           43s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/oldbird-669d8f9cdc   1         1         1       43s
+
+
+
+2. Create deployment with new out to new.yaml. Change old to new in the new.yaml file.
+
+ kubectl create deploy oldbird --image=nginx:latest --dry-run=client -o yaml > new.yaml
+linux2@kubernetes:~$ vi new.yaml 
+linux2@kubernetes:~$ 
+
+Apply new app
+
+linux2@kubernetes:~$ kubectl get all --selector app=newbird
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/newbird-7cd6dffd88-h4gq9   1/1     Running   0          17s
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/newbird   1/1     1            1           17s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/newbird-7cd6dffd88   1         1         1       17s
+linux2@kubernetes:~$ 
+
+3. At this point we should have the New and Old Bird Deployment deployed.
+
+
+
+
