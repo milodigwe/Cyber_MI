@@ -18,3 +18,42 @@ By default, every account and OU has the FullAWSAccess SCP attached, which allow
 
 Cost and Usage (CUR) must be created in the AWS Organizations management account 
     - CUR automatically includes all members accounts
+Replicate on-premises to windows cloud aws storage gateway.
+AWS windows file server FSX windows server.
+
+
+AWS Compute Optimizer is an AWS service that helps you right-size your compute resources by analyzing how you actually use them and then giving recommendations to improve performance and reduce cost.
+
+
+
+To central maangement IPs use a Prefix list, use RAM to share the list amongest members in org and different accounts.
+
+Compute Optimizer recommends:
+
+Optimal memory size
+
+Expected performance impact
+
+Estimated monthly cost
+
+Potential cost savings
+
+This is exactly why it’s commonly used for questions involving Lambda memory tuning and cost optimization.
+
+
+https://aws.amazon.com/blogs/compute/optimizing-aws-lambda-cost-and-performance-using-aws-compute-optimizer/
+
+Cost Explorer and Billing reports most used for user defined cost allocation tags 
+
+Cost forecasting for future months : Cost Explorewr.
+
+ALB's do not support elastic IPs
+NAT gateways use Elastic IP addresses for internet access
+
+Assigning static Elastic IPs (from a BYOIP CIDR block) ensures:
+
+All outbound API calls originate from a known, fixed CIDR
+
+The third party can safely allowlist that CIDR
+
+

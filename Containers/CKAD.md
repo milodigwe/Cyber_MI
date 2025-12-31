@@ -3365,5 +3365,233 @@ linux2@kubernetes:~$
 3. At this point we should have the New and Old Bird Deployment deployed.
 
 
+kubectl expose deploy oldbird --name=bird --port=80 --selector type=bird --type=NodePort
+service/bird exposed
+linux2@kubernetes:~$ kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+bird         NodePort    10.98.122.108   <none>        80:30494/TCP   12s
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        14h
+linux2@kubernetes:~$ kubectl get all
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/newbird-7cd6dffd88-hzt85   1/1     Running   0          88s
+pod/oldbird-669d8f9cdc-qkm4s   1/1     Running   0          95s
+
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/bird         NodePort    10.98.122.108   <none>        80:30494/TCP   27s
+service/kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        14h
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/newbird   1/1     1            1           88s
+deployment.apps/oldbird   1/1     1            1           95s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/newbird-7cd6dffd88   1         1         1       88s
+replicaset.apps/oldbird-669d8f9cdc   1         1         1
+
+
+linux2@kubernetes:~$ curl 192.168.49.2:30494
+<!DOCTYPE html>
+<html>
+<head>
+
+
+linux2@kubernetes:~$ # To scale old deployment so that it take 90% of the traffic.
+linux2@kubernetes:~$ kubectl scale deploy oldbird --replicas=9
+deployment.apps/oldbird scaled
+linux2@kubernetes:~$ kubectl get pods
+NAME                       READY   STATUS              RESTARTS   AGE
+newbird-7cd6dffd88-hzt85   1/1     Running             0          4m54s
+oldbird-669d8f9cdc-4ljbk   0/1     ContainerCreating   0          8s
+
+
+linux2@kubernetes:~$ kubectl get pods
+NAME                       READY   STATUS              RESTARTS   AGE
+newbird-7cd6dffd88-hzt85   1/1     Running             0          4m54s
+oldbird-669d8f9cdc-4ljbk   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-5z8nn   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-7m4md   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-g7rgk   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-hhrj2   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-jqf49   0/1     ContainerCreating   0          8s
+oldbird-669d8f9cdc-kwxks   0/1     ContainerCreating   0          9s
+oldbird-669d8f9cdc-qkm4s   1/1     Running             0          5m1s
+oldbird-669d8f9cdc-slbf9   0/1     ContainerCreating   0          8s
+linux2@kubernetes:~$ # Its taking 90 percent of the traffic new new only has one running pod
+
+
+# Lesson 14: Working with the API
+
+## Understanding the Kubernete API
+- The Kubernetes API provides a way to interact with Kubernetes
+  - Provides RESTFUL endpoint that allow the users to perform operations on the cluster
+    - The API uses resources to represent components of the Kubernetes cluster.
+    - It supports a declarative configuration model, where users define the desire state of the cluster in YAML or JSON manifests.
+  
+kubectl api-resources : shows the resources available
+In the third column if the field is false the resource is accessible for the whole cluster.
+
+kubectl api-versions : Shows api available.
+
+* The kube-apiserver provides access to the API
+* kubectl client is the main tool to communicate with the API
+    - Ues the /.kube/config file to use the TLS keys for secure communication
+* The kube-proxy can be used as a proxy that uses the .kube/config TLS key for secure communication.
+
+* This allows utilities like curl to communicate with the API in a non-secure way
+
+curl goe through kube-proxy using tls to communicate to api server.
+
+* Client Configuration
+  - kubectl config view to view current kubectl client configuration
+    - This command reads the ~/.kube/config file, which contains the following elements
+      - Cluster: certificates and API endpoint needed to contact the kube-apiserver process
+      - Users: The TLS certificates that make up the user account
+      - Context: the combination of the user and cluster, to which default Namespace is aded.
+
+
+* To change the current names space so that you when you run get pods you will end up in a new default namespace you set-context
+
+kubectl config set-context --current --namespace=kube-system
+
+To change it back to default namespace 
+
+kubectl config set-context --current --namespace=default
+
+
+## Using curl to Work with API Objects
+* Connecting to the API
+  - To access the API using curl, start the kube-proxy on the Kubernetes user workstation
+    - kubectl proxy --port=8001 &
+    - curl http://localhost:8001
+
+This shows all the available API paths and groups, providing access to all exposed functions
+
+Using curl to Access API Resources
+* You can manage your pods using curl
+* On the host that run kubectl proxy --port=8001 &
+  - kubectl run proxypod --image=nginx
+  - curl http://localhost:8001/version
+  - curl http://localhost:8001/api/v1/namespaces/default/pods : shows the Pods
+  - curl http://localhost:8001/api/v1/namespaces/default/proxypod : shows direct API access to a Pod
+  - curl -XDELETE http://localhost:8001/api/v1/namespaces/default/proxypod : will delete the httpd Pod
+
+## API Deprecations
+- With new Kubernetes release, old API versions may get deprecated. New release every 4 year
+- Deprecation message, take action an change your YAML manifest files
+
+
+linux2@kubernetes:~/ckad$ #Understanding API Deprecation 
+linux2@kubernetes:~/ckad$ 
+linux2@kubernetes:~/ckad$ 
+linux2@kubernetes:~/ckad$ kubectl create -f redis-deploy.yaml 
+error: resource mapping not found for name: "redis" namespace: "" from "redis-deploy.yaml": no matches for kind "Deployment" in version "apps/v1beta1"
+ensure CRDs are installed first
+linux2@kubernetes:~/ckad$ # Investigate the errror before
+linux2@kubernetes:~/ckad$ cat redis
+redis-deploy.yaml  redis.yaml         
+linux2@kubernetes:~/ckad$ cat redis-deploy.yaml 
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: redis
+
+
+
+
+linux2@kubernetes:~/ckad$ # API version lets investigate if that api version exist
+
+linux2@kubernetes:~/ckad$ kubectl api-versions | grep "apps/vi*"
+apps/v1
+
+linux2@kubernetes:~/ckad$ vi redis-deploy.yaml 
+
+linux2@kubernetes:~/ckad$ kubectl create -f redis-deploy.yaml 
+deployment.apps/redis created
+linux2@kubernetes:~/ckad$ kubectl get deploy --selector app=redis
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+redis   1/1     1            1           35s
+
+
+* To fix my kubernetes verison, Kubeernetes only supports a +1 minor version skew between kubectl and the API server.
+
+linux2@kubernetes:~/ckad$ kubectl version
+Client Version: v1.31.0
+Kustomize Version: v5.4.2
+Server Version: v1.34.0
+WARNING: version difference between client (1.31) and server (1.34) exceeds the supported minor version skew of +/-1
+
+
+inux2@kubernetes:~$ curl -LO https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   138  100   138    0     0    417      0 --:--:-- --:--:-- --:--:--   418
+100 57.7M  100 57.7M    0     0  6795k      0  0:00:08  0:00:08 --:--:-- 4718k
+
+
+inux2@kubernetes:~$ curl -LO https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl.sha256
+echo "$(cat kubectl.sha256) kubectl" | sha256sum --check
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   138  100   138    0     0   1185      0 --:--:-- --:--:-- --:--:--  1189
+100    64  100    64    0     0    316      0 --:--:-- --:--:-- --:--:--   316
+kubectl: OK
+
+
+inux2@kubernetes:~$ chmod +x kubectl
+linux2@kubernetes:~$ sudo mv kubectl /usr/local/bin/kubectl 
+linux2@kubernetes:~$ which kubectl 
+/usr/local/bin/kubectl
+
+
+
+linux2@kubernetes:~$ kubectl version 
+Client Version: v1.34.0
+Kustomize Version: v5.7.1
+Server Version: v1.34.0
+
+## Extending the API
+* A CustomResourceDefinition (crd) is an API resource that makes adding your own API resources easy
+  - The crds are integrated with the Kubernetes API server and follow the API server update mechanism
+  - Using crd is common , as it provides an easy way to add resources without any need to program them
+
+## Custom Controller
+*  A controller is a process that watches for changes in kubernetes API
+  - When change occurs, the controller take action to ensure that the desired state of the reosurce is maintained.
+  - Controllers allow you to automate common task within the Kubernetes cluster
+  - Custom controllers communicate with the Kubernetes API by using libraries
+  - API aggregation, the kubernetes api is extended with additional API serers.
+
+
+## CustomResourceDefinitions
+- CustomResourceDefinitions allow users to add custom resources to clusters
+  - The crd allows users to add resources in a very easy way
+  - The resources are added as extensions to the org Kubernetes API server.
+  - Adding custom resources only makes sense if you have an app thats using them
+
+* How to Create Custom Resources
+1. First , you'll need to define the resource , using the CustomResourceDefinition API kind.
+2. After defining the resource, it can be added throught its own API resource
+
+
+The Kubernetes Controller manager runs a reconciliation loop, which continously observes the current state, compares it to the desired state, and adjusts it when necessary.
+  operatorhub.io : common registry
+
+
+
+  To find CRDs in your system:
+
+  inux2@kubernetes:~$ kubectl api-resources | grep crd
+customresourcedefinitions           crd,crds     apiextensions.k8s.io/v1           false        CustomResourceDefinition
+
+linux2@kubernetes:~$ kubectl  get crd
+No resources found
+
+
+** Currently we have no crds installed.
+
+# Lesson 15 : Security
+
+## Authentication and Authorization
 
 
