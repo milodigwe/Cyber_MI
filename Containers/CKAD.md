@@ -3593,5 +3593,108 @@ No resources found
 # Lesson 15 : Security
 
 ## Authentication and Authorization
+- Usually Kubernetes admin account is used for authentication
+  - kubectl config specifies to which cluster to authenticate
+  - kubectl config specifies to which cluster to authenticate
+    - kubectl config view to see current settings
+    - The config si read from ~/.kube/config
+
+Role Based Access Control (RBAC)
+  - kubectl auth can-i .. means - kubectl auth can-i get pods to find out what you can do.
+  - Use kubectl auth can-i get pods -- as=system:serviceaccount:bellevue:view -n bellevue
 
 
+  Example :
+
+  linux2@kubernetes:~$ kubectl auth can-i get pods
+yes
+linux2@kubernetes:~$ kubectl auth can-i get pods --as bob@example.com
+no
+linux2@kubernetes:~$ 
+
+## Understanding Service Accounts
+- All actions in a Kubernetes Cluster need to be authenticated and authorized.
+  - ServiceAccounts are used for basic authentication from within the Kubernetes cluster
+  - RBAC used to connect a ServiceAccount to a specific Role
+  - Every Pod uses the default ServiceAccount to contact the API server
+  - This default ServiceAccount allows a resource to get information from the API serer, but not much else.
+
+
+
+linux2@kubernetes:~$ #List service accounts
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ kubectl get sa
+NAME      SECRETS   AGE
+default   0         44h
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ kubectl get sa -n kube-system | less
+linux2@kubernetes:~$ 
+
+
+## Role Based Access Control (RBAC):
+- RBAC uses 3 components to grant permissions to API objects
+  - A Role consists of Verbs which assign specific permissions like view, edit, and more.
+  - A Service Account is used by Pods that need access to API resources
+  - RoleBinding connects a Service Account to a Role.
+      - Roles and RoleBindings have a Namespace scope, ClusterRoles and ClusterRoleBindings have a cluster scope.
+      - RBAC used for people that need access to specific resources.
+
+## DEMO on how to create Roles and service accounts
+
+linux2@kubernetes:~$ kubectl create ns bellevue
+namespace/bellevue created
+linux2@kubernetes:~$ kubectl create role viewer -h
+Create a role with single rule.
+
+Examples:
+  # Create a role named "pod-reader" that allows user to perform "get", "watch" and "list" on pods
+  kubectl create role pod-reader --verb=get --verb=list --verb=watch --resource=pods
+  
+
+linux2@kubernetes:~$ kubectl create role viwer --verb=get --verb=list --verb=watvue--resource=pods -n belle 
+role.rbac.authorization.k8s.io/viwer created
+linux2@kubernetes:~$ # Create Role viewer
+linux2@kubernetes:~$ # Create Service Account
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ kubectl create sa viewer -n bellevue
+serviceaccount/viewer created
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ #Verify
+linux2@kubernetes:~$ kubectl delete sa viewer -n bellevue
+serviceaccount "viewer" deleted from bellevue namespace
+linux2@kubernetes:~$ kubectl create sa viwer -n bellevue
+serviceaccount/viwer created
+linux2@kubernetes:~$ kubectl get sa -n bellevue
+NAME      SECRETS   AGE
+default   0         5m38s
+viwer     0         10s
+linux2@kubernetes:~$ kubectl get role -n bellevue
+NAME    CREATED AT
+viwer   2026-01-01T12:33:52Z
+
+
+linux2@kubernetes:~$ # Next Connect the Roles Together
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ kubectl create rolebinding <name> --serviceaccount=<namesap=<rolename> -n <namespace>ole 
+bash: syntax error near unexpected token `newline'
+linux2@kubernetes:~$ # Syntax
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ kubectl create rolebinding viwer --serviceaccount=bellevue:vueer --role=viwer -n belle 
+rolebinding.rbac.authorization.k8s.io/viwer created
+linux2@kubernetes:~$ 
+linux2@kubernetes:~$ # Create Deployment and have service account be able to use the deployment
+
+
+kubectl create deploy viewginx --image=nginx --replicas=3 -n bellevue
+
+kubectl set serviceaccount deployment viewginx viwer -n bellevue
+
+kubectl auth can-i get pods --as=system:serviceaccount:bellevue:viwer -n bellevue
+
+kubectl get clusterrolebindings
+ 1305  kubectl get clusterrolebindings | grep coredns
+ 1306  kubectl describe clusterrolebindings system:coredns
+ 1307  # to find out whats going on in coredns
+ 1308  kubectl describe clusterrole system:coredns
