@@ -3698,3 +3698,280 @@ kubectl get clusterrolebindings
  1306  kubectl describe clusterrolebindings system:coredns
  1307  # to find out whats going on in coredns
  1308  kubectl describe clusterrole system:coredns
+
+
+ ## SecurityContext 
+ * A SecurityContext defines priviledge and access control settings for a Pod or container and includes following:
+  - allowPrivilege Escalation : whether or not a container can run with privlesges
+  - Capabilities : capabilities used by the containers
+  - runAsNonRoot: enforces a non-privileged UID
+  - readOnlyFilesystem: no writes to the container filesystems
+  - seLinuxOptions: specifies SELINUX context labels
+
+  * Resources , Requests and Limits
+  - Resources can be set for containers in a Pod ensure that the Pd is only scheduled on cluster nodes that meet the resource requests
+    - Use pod.spec.containers.resources.requests to set
+  
+  - Resource limits can be set for Pods to maximize the use of system resources
+    - Use pod.spec.containers.resources.limits
+  
+  - Quota are restrictions that can be set on a namespace to maximize the AZ of resources within that namespace
+    - If a namespace has Quoata, all Pods running in that namespace must have resources set
+
+## Resource Limitations
+  - CPU limits are expressed in millicore or millicpu , 1/1000 of aCPU core. 500 millicore is 0.5 CPU
+    - kube-scheduler ensures that the node running the Pods has all requested resources available
+    - If a Pod with resource limits cannot be scheduled , it will show a status of Pending.
+    - Use kubectl set resources... to apply resource limits to running applications in deployments.
+
+Quota are restrictions that are applied to Namespaces
+  - If Quota are set on a Namespace, applications started in that Namepsace must have resource requests and limits set.
+    - kubectl create quota .. -n mynamespace to apply Quote
+  
+## Lab 15: Managing Security Settings
+1. In the Namespace secure , create a ServiceAccount with the name "secure"
+2. Start a Deployment with the name "securedeploy" in this namespace and ensure it uses the secure ServiceAccount
+
+inux2@kubernetes:~$ kubectl create ns secure
+namespace/secure created
+linux2@kubernetes:~$ kubectl create sa secure -n secure
+serviceaccount/secure created
+linux2@kubernetes:~$ kubectl create deploy --help
+Create a deployment with the specified name.
+
+
+linux2@kubernetes:~$ kubectl create deploy securedeploy -n secure --image=nginx
+deployment.apps/securedeploy created
+linux2@kubernetes:~$ kubectl set --help
+
+linux2@kubernetes:~$ kubectl set serviceaccount --help
+Update the service account of pod template resources.
+
+linux2@kubernetes:~$ kubectl set serviceaccount deployment securedeploy secure -n secure
+deployment.apps/securedeploy serviceaccount updated
+
+
+Verify:
+
+kubectl describe deploy securedeploy -n secure
+Name:                   securedeploy
+Namespace:              secure
+CreationTimestamp:      Thu, 01 Jan 2026 20:34:44 +0000
+Labels:                 app=securedeploy
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               app=securedeploy
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:           app=securedeploy
+  Service Account:  secure
+
+
+# Troubleshooting Kubernetes 
+Flow of how to troubleshoot Kubernetes
+
+YAML -> kube-api server (kubectl) Performs syntax check or Pending or error with Pods/Deply -> writes to etcd -> Forward request to scheduler -> Find eligible nodes -> Downloads images -> Then container starts -> Service is started (Has a label) -> Ingress (Has Labels) -> DNS -> User Requests.
+
+## Analyzing Failing Applications 
+Pod Startup
+  1. After using kubectl create or kubectl run, the requested resources are written to the etcd database
+  2. Next, the scheduler will look up a node eligible to run the application
+  3. After finding an eligible node, the Pod image is pulled to this node
+  4. Next, the Pod container is started and run its entrypoint application
+  5. Based on the success or failure of the entrypoint application, the Pod restartPolicy is applied to determine further action
+
+
+Pod different states
+- Pending: the Pod has been validated by the API server and an entry has been created in the etcd, but some prequisites conditions have been met.
+- Running: the Pod currently is successfully running
+- Completed : the Pod has completed its work
+- Failed : the Pod has finished but something has gone wrong
+- CrashLoopbackOff: The Pod has failed, and the cluster has restated it
+- Unknown: The Pod status could not be obtained
+
+## Troubleshooting Failed Applications
+- Use kubectl describe to investigate the app state
+1. Look at the events, next have a look at the app state.
+2. Check the last state, in particular the app exit code
+3. If the exit code 0, the app has completed succcessfully and no further investigation is needed
+4. If the exit code is other than 0, there is a problem with the entrypoiny application and you need to use kubectl logs to investigate the application logs
+5. If a Pod is continously restart, use kubectl logs --previous to check logs for a Pod no longer running.
+
+## Analyzing Network Access Problems
+- Different elemtns are required when a user accesses an application
+  - Through DNS, the request reaches ingress
+  - Ingress has rules that connect the incoming requests to a service by referring to the service name
+  - The service connects to Pods based on labels and selectors
+
+- To troubleshoot application access, analyze in the following order
+1. Does the DNS request reach Ingress?
+2. Is there an Ingress rule that connects the incoming request to a Service?
+3. Does the Service connect to Pods addressing the right label?
+
+* To test if a process is running as expected inside the Pod, but not accessible from the outside, use kubectl port-forward
+  - kubectl port-forward <app> <local_port>:<app_port>
+    curl localhost:<local_port>
+
+
+## NetworkPolicy
+- Use kubectl get netpol -n namespace to list networkPolicies for a specific namespace
+  - To check if the networkpolicy applies to a Pod, verify spec.podSelector in the networkPolicy
+  - If a NetworkPolicy applies to a Pod, it should have spec.ingress.podSelector.matchLabels to define which Pods have access
+
+# Monitoring Cluster Events
+- kubectl get events provides an overview of cluster-wide events
+- kubectl get events -o wide provides an overview of cluster-wide events with more details
+- Use kubectl get events if its unclear to which resource an error condition is related.
+- If you know which resource is involved, better use kubectl describe on that resource
+
+## Authentication Issues
+-  Acces to the cluster is configured through a ~/.kube/config file
+- This file is copied from the control node in the cluster, where it is stored as /etc/kubernetes/admin.conf
+- Use kubectl config view to check contents of this file
+- For additional authorization-based problems , use kubectl auth can-i create pods
+
+Lesson 16: Lab Troubleshootin Applications
+- Run the lab16-break.sh script from the course git repo
+- Type kubectl get all to check for running applications. Fix the problems
+
+To monitor if an application still is working as expected, health probes can be used.
+  - The kube-apiserver itself exposes threee endpoints to test that is working:
+    - /healthz: return "ok" if the API sever is healthy
+    - /livez: indicates if the API server is alive
+    - readyz: indicates if the API server is ready to service request
+  - Use curl -k https://$(minikube ip):8443/healthz to test, it should return "ok" as result
+
+## Using Probes to Monitor Probes
+  - The probe itself is a simple test that is defined as a container property, which is ofent a command
+    - Probes are used to test if the application that uses it is still functional
+    - If the probe doesn't respond, the application is restarted
+  Types of probe test types: pod.spec.container
+    exec : a command is executed and returns a zero exit value
+    httpGet: an HTTP request returns a respnse code between 200 adn 399
+    tcpSocket: connectivity to a TCP socket (available port) is successful
+  - Probes can be configured with a failure Treshold to determine how long it can take the application to react.
+
+
+* 3 Different Probe Types :
+  1. livenessProbe: checks if the application is alive. Container will be restarted if the probe test fails
+  2. ReadlinessProbe: check if the application is ready to service requests. Container will be removed from the list available services if it fails.
+  3. Startup Probe: used to verify initial startup of the application, usesful if startup can be slow. No other probes are used before this probe finishes successfully.
+
+
+linux2@kubernetes:~/ckad$ kubectl apply -f busybox-ready.yaml 
+pod/busybox-ready created
+linux2@kubernetes:~/ckad$ kubectl get pods
+NAME            READY   STATUS              RESTARTS   AGE
+busybox-ready   0/1     ContainerCreating   0          6s
+linux2@kubernetes:~/ckad$ kubectl get pods
+NAME            READY   STATUS    RESTARTS   AGE
+busybox-ready   0/1     Running   0          21s
+linux2@kubernetes:~/ckad$ # Check Pod to verify its running
+linux2@kubernetes:~/ckad$ kubectl describe pod busybox-ready
+Name:             busybox-ready
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.58.2
+Start Time:       Sat, 03 Jan 2026 19:50:32 +0000
+Labels:           <none>
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.5
+IPs:
+  IP:  10.244.0.5
+Containers:
+  busy:
+    Container ID:  docker://dacd0fedd2507be58108dafcaa72226f461b827a3ecaab3ad5091ac9edbe79f4
+    Image:         busybox
+    Image ID:      docker-pullable://busybox@sha256:d80cd694d3e9467884fcb94b8ca1e20437d8a501096cdf367a5a1918a34fc2fd
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sleep
+      3600
+    State:          Running
+      Started:      Sat, 03 Jan 2026 19:50:38 +0000
+    Ready:          False
+    Restart Count:  0
+    Readiness:      exec [cat /tmp/nothing] delay=0s timeout=1s period=10s #success=1 #failure=3
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-jxtw4 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-jxtw4:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  57s               default-scheduler  Successfully assigned default/busybox-ready to minikube
+  Normal   Pulling    55s               kubelet            Pulling image "busybox"
+  Normal   Pulled     52s               kubelet            Successfully pulled image "busybox" in 2.855s (2.855s including waiting). Image size: 4429382 bytes.
+  Normal   Created    51s               kubelet            Created container: busy
+  Normal   Started    51s               kubelet            Started container busy
+  Warning  Unhealthy  8s (x7 over 50s)  kubelet            Readiness probe failed: cat: can't open '/tmp/nothing': No such file or directory
+linux2@kubernetes:~/ckad$ # We notice that it cannot open the file /tmp/nothing, we need to create it in the container
+linux2@kubernetes:~/ckad$ kubectl exec -it busybox-ready -- touch /tmp/nothing
+linux2@kubernetes:~/ckad$ # Verify since we created file 
+linux2@kubernetes:~/ckad$ kubectl get pods
+NAME            READY   STATUS    RESTARTS   AGE
+busybox-ready   1/1     Running   0          2m27s
+
+
+# Lesson 17 Lab Using Probes
+- Run a Pod with the name "probed". The pod should start the nginx:latest image. Use probes to meet the following conditions
+  - The application should have 30 seconds to start
+  - After being started, the application should test that it is still healthy every 10 seconds. If the application is no longer healthy, it should be restarted.
+  - To perform the probes, test access to the Kubernetes healthz endpoint.
+
+  ## Demo Solution ##
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: readiness-exec
+  name: readiness-exec
+spec:
+  containers:
+  - name: readyornot
+    image: busybox
+    command:
+      - sleep
+      - "3600"
+    readinessProbe:
+      exec:
+        command:
+        - wget
+        - --no-check-certificate
+        - --spider
+        - https://192.168.49.2:8443/healthz
+      initialDelaySeconds: 3
+      periodSeconds: 3
+
+
+## Exam Prep ##
+
+minikube stop ;
+minikube delete ; 
+minikube start --cni=calico : will start minikube with network plugin
+
+## Task Overview ##
