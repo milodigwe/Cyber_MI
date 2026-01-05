@@ -3975,3 +3975,140 @@ minikube delete ;
 minikube start --cni=calico : will start minikube with network plugin
 
 ## Task Overview ##
+
+checking task 1 results
+[OK]		 namespace indiana was found
+[OK]		 secret insecret with COLOR=blue was found
+[OK]		 found pod inpod that uses the latest version of nginx
+[OK]		 pod inpod uses the secret insecret
+
+-------
+kubectl create ns indiana
+kubectl run inpod --image=nginx -n indiana
+
+Created secret:
+kubectl create secret insecret --from-literal=COLOR=blue -n indiana
+
+Then destroy container and create yaml file to use the secret container.
+
+https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data
+
+Under section " Define a container environment variable with data from a single Secret"
+
+Create a yalm file --dry-run=client
+
+Then add in secret parameter
+
+  env:
+    - name: insecret
+      valueFrom: 
+        secretKeyRef:
+          name: insecret
+          key: COLOR
+
+Then check If Pod can use container:
+
+linux2@kubernetes:~$ kubectl exec -it inpod -n indiana -- /bin/sh -c 'echo $insecret'
+blue
+
+
+
+at task1.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: inpod
+  name: inpod
+  namespace: indiana
+spec:
+  containers:
+  - image: nginx:latest
+    env:
+    - name: insecret
+      valueFrom: 
+        secretKeyRef:
+          name: insecret
+          key: COLOR
+    name: inpod
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+
+Task2
+
+Find all pods that ahve the label tier=control plane and write a list of the name of these Pods to the file /tmp/task2pods
+linux2@kubernetes:~$ kubectl get pods -A -l tier=control-plane --show-labels | awk '{print $0}'
+NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE   LABELS
+kube-system   etcd-minikube                      1/1     Running   0          23h   component=etcd,tier=control-plane
+kube-system   kube-apiserver-minikube            1/1     Running   0          23h   component=kube-apiserver,tier=control-plane
+kube-system   kube-controller-manager-minikube   1/1     Running   0          23h   component=kube-controller-manager,tier=control-plane
+kube-system   kube-scheduler-minikube            1/1     Running   0          23h   component=kube-scheduler,tier=control-plane
+
+
+
+kubectl get pods -A -l tier=control-plane --show-labels | awk '{print $2}' | grep -v NAME > /tmp/task2pods
+
+
+Task 3 :
+
+linux2@kubernetes:~$ echo "welcome" > index.html
+linux2@kubernetes:~$ kubectl get configmap
+NAME               DATA   AGE
+kube-root-ca.crt   1      24h
+
+
+
+
+linux2@kubernetes:~$ kubectl create configmap task3cm --from-file=index.html
+configmap/task3cm created
+linux2@kubernetes:~$ kubectl get configmap task3cm
+NAME      DATA   AGE
+task3cm   1      16s
+linux2@kubernetes:~$ kubectl describe configmap task3cm
+Name:         task3cm
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+index.html:
+----
+welcome
+
+
+
+Create a deployment oregonpod.
+kubectl create deployment oregonpod --image-nginx:latest
+
+Then edit the deployment file
+
+kubectl edit deployment oregonpod
+
+Add in the following lines
+
+volumeMounts:
+- mountPath : /usr/share/nginx/html
+  name: task3cm
+
+Find the line that says configMap
+add below:
+
+volumes:
+  - name: 
+    configMap:
+      name: task3cm
+
+Then log into the container annd verify file index.html is /usr/share/nginx/html/index.html
+
+kubectl describe pod <pod_name>
+Under mounts you should see the  /usr/share/nginx/html/ from task3cm
+
+
+Task 4:
+
+
+
