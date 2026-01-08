@@ -4110,5 +4110,147 @@ Under mounts you should see the  /usr/share/nginx/html/ from task3cm
 
 Task 4:
 
+Look up documentation named sidecar. Find the stanza with initContainer.
+We need to change the template to pod, and remove unessary things.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sidepod
+  labels:
+    app: sidepod
+spec:
+      containers:
+        - name: sidepod
+          image: nginx:latest
+      initContainers:
+        - name: sidecar
+          image: nginx:latest
+          command: ['sleep', '15' ]
+          restartPolicy: always
+
+The initContainer will restart the pod every 15 seconds
+
+
+Task6:
+
+Create a delployment with name update add 3 replicas type prod.
+Ensure maxsurge 50% and maxAvailable 50
+Then update the deployment to run the latest
+
+Yaml file to apply. Then follow step below:
+
+linux2@kubernetes:~$ cat task6.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: updates
+ labels:
+   app: prod
+spec:
+ replicas: 3
+ selector:
+   matchLabels:
+     app: prod
+ template:
+   metadata:
+     labels:
+       app: prod
+   spec:
+     containers:
+     - name: nginx
+       image: nginx:1.17
+       ports:
+       - containerPort: 80
+ strategy:
+   type: RollingUpdate
+   rollingUpdate:
+     maxSurge: 50%
+     maxUnavailable: 50%
+
+
+
+ 2024  kubectl set image deployment/updates nginx=nginx:latest
+ 2025  kubectl get deploy -A
+2024  kubectl set image deployment/updates nginx=nginx:latest
+ 2025  kubectl get deploy -A
+ 2026  ## Rollback
+ 2027  kubectl rollout status deploy/updates
+ 2028  kubectl rollout undo deploy/updates
+ 2029  kubectl describe deploy updates
+ 2030  kubectl rollout history deployment updates
+
+
+Task 7: 
+
+Add myapp.info to /etc/hosts file
+Expose the updates application that you created in task 6 , using service with the name task7svc
+Use ingress to ensure the app is accessible by using the url myapp.info
+
+Expose updates application:
+
+kubectl expose deploy updates --name=task7svc --port=80
+
+minikube addons enable ingress
+
+kubectl create ing myapp --rule="myapp.info/=task7svc:80"
+
+curl myapp.info : you should see nginx webpage.
+
+Task 8:
+
+Create a Pod with the name "nevaginx" running the latest version of the nginx image and using the label type=webapp
+
+Create a Network Policy that ensure that only applications that use the lable type=tester have access to the pod
+
+Run a pod with the name "nevatest", using the latest version of the busy image
+
+Ensure that from this pod you can access the nevaginx pod. Test with wget --spider --timeout=1 nevaginx
+
+1. Create the nevaginx pod with the label type=webapp.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nevaginx
+  labels:
+    environment: production
+    app: nginx
+    type: webapp
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+
+2. Create Second container nevatest
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nevatest
+  labels:
+    environment: production
+    app: nginx
+    type: tester
+spec:
+  containers:
+  - name: busybox
+    image: busybox:latest
+    command: ["sh", "-c", "sleep infinity"]
+
+
+3. Expose container nevaginx 
+
+kubectl expose pod nevaginx --port=80
+
+4. Verify network policy 
+kubectl describe networkpolicy test-network-policy
+
+5. Very you can connect from the nevaginx pod.
+
+Log into contanier  nevatest and curl nevaginx pod 
+kubectl exec -it nevatest -- wget --spider --timeout=1 nevaginx : You shoudl reach url
+
 
 

@@ -1,5 +1,8 @@
 AWS IAM Identity Center (AWS SSO) allows you to connect to your on-premises Active Directory service using SAML 2.0. With this, you can enable automatic provisioning by using the System for Cross-domain Identity Management (SCIM) v2.0 protocol, which allows for the management of user identities in a single location.
 
+
+https://digitalcloud.training/category/aws-cheat-sheets/aws-solutions-architect-professional/
+
 429 : Too many request
     - To resolve implement api throttling 
 
@@ -56,4 +59,18 @@ All outbound API calls originate from a known, fixed CIDR
 
 The third party can safely allowlist that CIDR
 
+- When migrating to aws, lift and shift. Create OVF file form vm and vm import.
+Backup and restore :
+https://aws.amazon.com/blogs/storage/backup-and-restore-on-premises-vmware-virtual-machines-using-aws-backup/
 
+
+AWS Control Tower provides prebuilt guardrails
+
+There is a strongly recommended guardrail that:
+
+Uses AWS Config
+
+Detects RDS DB instances that are not encrypted at rest
+    - mandatory controls are owned by aws in control tower and cant be turned off.
+
+    
