@@ -4253,4 +4253,199 @@ Log into contanier  nevatest and curl nevaginx pod
 kubectl exec -it nevatest -- wget --spider --timeout=1 nevaginx : You shoudl reach url
 
 
+Task 9
 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storepod
+spec:
+  containers:
+  - name: example-container
+    image: nginx:latest
+    volumeMounts:
+    - mountPath: /usr/share/nginx/html
+      name: example-volume
+  volumes:
+  - name: example-volume
+    hostPath:
+      path: /webapp
+
+
+linux2@kubernetes:~$ kubectl apply -f task9.yaml 
+pod/storepod created
+linux2@kubernetes:~$ kubectl label pod storepod type=storage
+pod/storepod labeled
+
+2. Expose port 80. Container port.
+
+linux2@kubernetes:~$ kubectl expose pod storepod --port=80
+service/storepod exposed
+linux2@kubernetes:~$ ## edit port to nodeport
+linux2@kubernetes:~$ kubectl edit pod storepod
+Edit cancelled, no changes made.
+linux2@kubernetes:~$ ## edit the svc storepod 
+
+3. Change ClusterIp to Nodeport, Add in parameter for nodePort: 32032.
+
+4. Verify service
+
+linux2@kubernetes:~$ kubectl edit svc storepod
+service/storepod edited
+linux2@kubernetes:~$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        4d22h
+nevaginx     ClusterIP   10.96.140.180    <none>        80/TCP         38h
+storepod     NodePort    10.100.157.254   <none>        80:32032/TCP   3m59s
+task7svc     ClusterIP   10.106.196.208   <none>        80/TCP         39h
+
+5. Curl you can access port on minikube ip
+
+linux2@kubernetes:~$ curl 192.168.49.2:32032
+welcome to the store
+
+9. Install helm chart
+
+1. Verify helm is installed:
+
+2. Very bitnami repo is added
+linux2@kubernetes:~$ helm repo add bitnami https://charts.bitnami.com/bitnami
+
+3. helm search repo bitnami/mysql
+
+4. helm search repo mysql | grep "bitnami/mysql"
+
+5. helm install mysql bitnami/mysql or helm install bitnami/mysql --generate-name
+
+
+6. Verify chart is installed
+
+helm install bitnami/mysql --generate-name
+
+
+Task 11: Managing Resource Restrictions
+Name space nebraska
+In NS run deployment with snoqdeploy using latest verison
+Ensure containers in deployment make initial memory request of 64mib and set max mem used to 128mib
+
+
+1. create namespace nebraska 
+kubectl create ns nebraska
+
+2. Create yaml file
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snowdeploy
+  namespace: nebraska
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "128Mi"
+          requests:
+            memory: "64Mi"
+
+kubectl apply -f task11.yaml file
+
+Added in thesee limits :
+
+      resources:
+          limits:
+            memory: "128Mi"
+          requests:
+            memory: "64Mi"
+
+https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-constraint-namespace/
+
+
+To do this by commandline
+kubectl create deploy snowdeploy -n nebraska --image=nginx
+
+To set up resources:
+kubectl set resources -n nebraska deploy snowdeploy --limits=memory=128mi --requests=memory=64mi
+
+kubectl describe deploy snowdeploy
+
+
+Task canary deployment
+
+Create two deployments and add labels allbirds
+
+Then edit NodePort to minikube port.
+
+
+kubectl describe -n birds svc oldbird : At first should show two pods as the service correspond to the two deploys (old/newbird)
+
+linux2@kubernetes:~$ kubectl expose deployment oldbird --selector type=allbirds --type=NodePort --port=80 -n birds
+service/oldbird exposed
+linux2@kubernetes:~$ kubectl describe -n birds svc oldbird
+Name:                     oldbird
+Namespace:                birds
+Labels:                   app=oldbird
+                          type=allbirds
+Annotations:              <none>
+Selector:                 type=allbirds
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.159.89
+IPs:                      10.100.159.89
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  31621/TCP
+Endpoints:                10.244.120.64:80,10.244.120.90:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+
+
+linux2@kubernetes:~$ kubectl scale -n birds deploy oldbird --replicas=4
+deployment.apps/oldbird scaled
+
+
+After scaling describe deployments you should see more pods sharing the traffic
+
+
+Task13: Defining Container Restrictions
+- Create a Pod with the name "Securedpod" using the latest verison of nginx image 
+  - Apply security restrictions : 
+    - Containers in this pod are not allowed to escalte privledges
+    - Containers in this pod are started with supplemental group with GID
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: securepod
+spec:
+  containers:
+  - name: securepod
+    image: nginx:latest
+    securityContext:
+      allowPrivilegeEscalation: false
+  securityContext:
+    supplementalGroups:
+      - 2000
+    runAsGroup: 2000
+~                       
+
+Inside of container run id : should show the supplementart group.
